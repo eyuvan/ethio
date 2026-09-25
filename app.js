@@ -1,47 +1,83 @@
-// 1 - 600 ካርቴላዎችን መፍጠር
-const grid = document.getElementById('cartela-grid');
-for (let i = 1; i <= 600; i++) {
-    let div = document.createElement('div');
-    div.className = 'cartela';
-    div.innerText = i;
-    div.onclick = function() {
-        // ሁሉንም በነጭ/በነበረበት አድርገን የተመረጠውን ብቻ ቀለም መቀየር
-        document.querySelectorAll('.cartela').forEach(c => c.classList.remove('selected'));
-        div.classList.add('selected');
-        generate5x5Card(); // ካርቴላ ሲመረጥ 5x5 መስራት
-    };
-    grid.appendChild(div);
-}
-
-// 5x5 የቢንጎ ካርቴላ ማመንጫ (ራንደም ቁጥሮች ለናሙና)
-function generate5x5Card() {
-    const cardContainer = document.getElementById('my-bingo-card');
-    cardContainer.innerHTML = '';
-    for (let i = 0; i < 25; i++) {
-        let cell = document.createElement('div');
-        cell.className = 'bingo-cell';
-        cell.innerText = i === 12 ? "FREE" : Math.floor(Math.random() * 75) + 1;
-        cardContainer.appendChild(cell);
+// --- 1. የካርቴላ መምረጫ አወቃቀር (1-600) ---
+const grid = document.getElementById('grid-container');
+if (grid) {
+    for (let i = 1; i <= 600; i++) {
+        let div = document.createElement('div');
+        div.className = 'cartela';
+        div.innerText = i;
+        div.onclick = function() {
+            document.querySelectorAll('.cartela').forEach(c => c.classList.remove('selected'));
+            div.classList.add('selected');
+        };
+        grid.appendChild(div);
     }
 }
 
-// የኔቪጌሽን ገጾችን መቀያየሪያ
-function switchRoute(routeId) {
-    document.querySelectorAll('.route').forEach(r => r.classList.remove('active'));
-    document.getElementById(routeId).classList.add('active');
+// --- 2. የቢንጎ ቦርድ ቁጥሮች ዝርዝር ማውጫ (1-75) ---
+function createBingoBoard() {
+    for(let i=1; i<=15; i++) { document.getElementById('list-B').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
+    for(let i=16; i<=30; i++) { document.getElementById('list-I').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
+    for(let i=31; i<=45; i++) { document.getElementById('list-N').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
+    for(let i=46; i<=60; i++) { document.getElementById('list-G').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
+    for(let i=61; i<=75; i++) { document.getElementById('list-O').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
+}
+createBingoBoard();
+
+// --- 3. ለትንሹ ስክሪን የዘፈቀደ ቀለማት ---
+const ballColors = ["#ff4757", "#2ed573", "#1e90ff", "#ffa502", "#9b59b6", "#00d2d3", "#ff6b81"];
+
+// --- 4. የካውንትዳውን ሰዓት ቆጣሪ ሎጂክ ---
+let timer = 49;
+const countdownElement = document.getElementById('countdown');
+
+if (countdownElement) {
+    const clock = setInterval(function() {
+        timer--;
+        countdownElement.innerText = timer;
+        if (timer <= 0) {
+            clearInterval(clock);
+            document.getElementById('selection-page').classList.add('hidden');
+            document.getElementById('live-game-page').classList.remove('hidden');
+            
+            connectToBingoWebSocket(); // ሰዓቱ ሲያልቅ ከባክኤንድ ጋር ይገናኛል
+        }
+    }, 1000);
 }
 
-// Countdown Timer ሎጂክ (ከ 49 ጀምሮ ወደ ታች)
-let timeLeft = 49;
-const timerElement = document.getElementById('countdown');
-
-const interval = setInterval(() => {
-    timeLeft--;
-    timerElement.innerText = timeLeft;
+// --- 5. የዌብሶኬት ግንኙነት ---
+function connectToBingoWebSocket() {
+    const ws = new WebSocket("ws://localhost:8000/ws/game");
     
-    if (timeLeft <= 0) {
-        clearInterval(interval);
-        // ሰዓቱ ሲያልቅ ወደ ሙሉ የጌም ገጽ (game.html) ይቀይራል
-        window.location.href = "game.html";
-    }
-}, 1000);
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === "LIVE_DRAW") {
+            document.getElementById('lbl-game-id').innerText = data.game_id;
+            document.getElementById('lbl-bet').innerText = data.bet;
+            document.getElementById('lbl-derash').innerText = data.derash;
+            document.getElementById('lbl-called-count').innerText = data.called_count;
+            
+            const ballScreen = document.getElementById('live-ball-screen');
+            if (ballScreen) {
+                ballScreen.innerText = data.current_call;
+                const randomColor = ballColors[Math.floor(Math.random() * ballColors.length)];
+                ballScreen.style.backgroundColor = randomColor;
+            }
+            
+            if (data.history) {
+                data.history.forEach(function(item) {
+                    let cell = document.getElementById('cell-' + item.number);
+                    if (cell) cell.classList.add('called-highlight');
+                });
+            }
+        }
+        
+        if (data.type === "GAME_OVER") {
+            const ballScreen = document.getElementById('live-ball-screen');
+            if (ballScreen) {
+                ballScreen.innerText = "END";
+                ballScreen.style.backgroundColor = "#333";
+            }
+        }
+    };
+}
