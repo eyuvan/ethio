@@ -1,0 +1,77 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #1a1a1a;
+    color: #fff;
+    text-align: center;
+}
+#top-bar {
+    display: flex;
+    justify-content: space-around;
+    background: #333;
+    padding: 10px;
+    font-weight: bold;
+}
+.screen { padding: 20px; margin-bottom: 60px; }
+.hidden { display: none !important; }
+
+/* 1-600 grid */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    max-height: 350px;
+    overflow-y: scroll;
+    background: #222;
+    padding: 10px;
+}
+.cartela-btn {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 10px 0;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.cartela-btn.selected {
+    background: #ffcc00;
+    color: black;
+    font-weight: bold;
+}
+
+/* Bingo Screen */
+#live-screen {
+    background: #000;
+    border: 2px solid #ffcc00;
+    padding: 15px;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+.bingo-board {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+.col { width: 18%; background: #222; border-radius: 4px;}
+.head { background: #ffcc00; color: black; font-weight: bold; padding: 5px 0;}
+.num-list { font-size: 12px; padding: 5px; min-height: 100px; word-break: break-all;}
+
+/* Bottom Navigation */
+#nav-bar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    background: #111;
+    border-top: 1px solid #333;
+}
+#nav-bar button {
+    flex: 1;
+    background: transparent;
+    color: white;
+    border: none;
+    padding: 15px 0;
+    font-size: 14px;
+}

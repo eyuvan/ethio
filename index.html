@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>እድል ቢንጎ (Edil Bingo)</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org"></script>
+</head>
+<body>
+
+    <!-- TOP BAR: Status & Timer -->
+    <div id="top-bar">
+        <div>Stake: <span id="play-stake">10 ETB</span></div>
+        <div>Game ID: <span id="game-id">#1024</span></div>
+        <div id="timer-box">Timer: <span id="timer">49</span>s</div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div id="main-content">
+        <!-- 1ኛ ደረጃ: የካርቴላ መምረጫ (1 - 600) -->
+        <div id="selection-screen" class="screen">
+            <h3>ካርቴላ ይምረጡ (እስከ 5 ካርቴላ)</h3>
+            <div id="cartela-grid" class="grid-container"></div>
+        </div>
+
+        <!-- የቢንጎ ጨዋታ መጀመሪያ ስክሪን (ከሴኮንድ በኋላ የሚመጣ) -->
+        <div id="game-screen" class="screen hidden">
+            <!-- የቀጥታ ቁጥር ማሳያ ትንሹ ስክሪን -->
+            <div id="live-screen">የተጠራ ቁጥር: <span id="called-number">-</span></div>
+            
+            <!-- 5x5 ካርቴላ ማሳያ -->
+            <div id="my-bingo-cards"></div>
+
+            <!-- B-I-N-G-O ሰንጠረዥ -->
+            <div class="bingo-board">
+                <div class="col"><div class="head">B</div><div id="list-B" class="num-list"></div></div>
+                <div class="col"><div class="head">I</div><div id="list-I" class="num-list"></div></div>
+                <div class="col"><div class="head">N</div><div id="list-N" class="num-list"></div></div>
+                <div class="col"><div class="head">G</div><div id="list-G" class="num-list"></div></div>
+                <div class="col"><div class="head">O</div><div id="list-O" class="num-list"></div></div>
+            </div>
+        </div>
+
+        <!-- WALLET SCREEN -->
+        <div id="wallet-screen" class="screen hidden">
+            <h3>የኪስ ቦርሳ (Wallet)</h3>
+            <p>Main Wallet: <span id="main-wallet-val">0.00</span> ETB</p>
+            <p>Play Wallet: <span id="play-wallet-val">0.00</span> ETB</p>
+            <p style="font-size:12px; color:gray;">*ለማስያዝ በ 0928361886 ላይ በቀጥታ ይላኩ።</p>
+        </div>
+
+        <!-- HISTORY SCREEN -->
+        <div id="history-screen" class="screen hidden">
+            <h3>የጨዋታ ታሪክ (History)</h3>
+            <div id="history-list">ምንም መዝገብ የለም</div>
+        </div>
+
+        <!-- PROFILE SCREEN -->
+        <div id="profile-screen" class="screen hidden">
+            <h3>የእኔ መገለጫ (Profile)</h3>
+            <p>Telegram ID: <span id="prof-tg-id">12345678</span></p>
+            <p>ስልክ: <span id="prof-phone">0928361886</span></p>
+            <p>Main Wallet: <span id="prof-main-w">0</span> ETB</p>
+            <p>Play Wallet: <span id="prof-play-w">0</span> ETB</p>
+        </div>
+    </div>
+
+    <!-- NAVIGATION BAR -->
+    <div id="nav-bar">
+        <button onclick="switchScreen('game')">🎮 Game</button>
+        <button onclick="switchScreen('wallet')">💰 Wallet</button>
+        <button onclick="switchScreen('history')">📜 History</button>
+        <button onclick="switchScreen('profile')">👤 Profile</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
