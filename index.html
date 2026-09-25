@@ -3,36 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>እድል ቢንጎ (Edil Bingo)</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://telegram.org"></script>
+    <title>እድል ቢንጎ (Lucky Bingo)</title>
+    <style>
+        /* CSS ቅንጅቶች */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* TOP BAR: Status & Timer */
+        #top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e1e1e;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-bottom: 2px solid #333;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        #timer-box {
+            background: #ff4444;
+            padding: 4px 12px;
+            border-radius: 20px;
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        /* MAIN CONTAINER */
+        #main-content {
+            padding: 15px;
+            padding-bottom: 80px;
+        }
+        .screen { display: block; }
+        .hidden { display: none !important; }
+
+        /* 1-600 grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            max-height: 320px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .cartela-btn {
+            background: #2a2a2a;
+            color: white;
+            border: 1px solid #444;
+            padding: 12px 0;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .cartela-btn.selected {
+            background: #ffcc00;
+            color: black;
+            border-color: #ffcc00;
+            box-shadow: 0 0 8px #ffcc00;
+        }
+
+        /* 5x5 Bingo Card Styles */
+        #my-bingo-cards {
+            margin-top: 15px;
+        }
+        .bingo-card-box {
+            background: #1e1e1e;
+            border: 2px solid #ffcc00;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+        }
+        .c-head {
+            background: #ffcc00;
+            color: black;
+            font-weight: bold;
+            padding: 6px 0;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .cell {
+            background: #2b2b2b;
+            padding: 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            border: 1px solid #444;
+        }
+        .cell.marked {
+            background: #4cd137;
+            color: white;
+            border-color: #4cd137;
+        }
+
+        /* Live Screen */
+        #live-screen {
+            background: #000;
+            border: 2px solid #ffcc00;
+            padding: 15px;
+            font-size: 26px;
+            font-weight: bold;
+            color: #ffcc00;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: inset 0 0 10px rgba(255,204,0,0.5);
+        }
+
+        /* Bingo Board Matrix */
+        .bingo-board {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .col { width: 19%; background: #1e1e1e; border-radius: 6px; border: 1px solid #333;}
+        .head { background: #333; color: #ffcc00; font-weight: bold; padding: 6px 0; border-radius: 6px 6px 0 0;}
+        .num-list { font-size: 13px; padding: 8px 4px; min-height: 120px; line-height: 1.6; color: #ccc;}
+		/* Bottom Navigation */
+        #nav-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            background: #1e1e1e;
+            border-top: 2px solid #333;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+        }
+        .nav-btn {
+            flex: 1;
+            background: transparent;
+            color: #aaa;
+            border: none;
+            padding: 15px 0;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .nav-btn.active {
+            color: #ffcc00;
+            border-top: 3px solid #ffcc00;
+            padding-top: 12px;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- TOP BAR: Status & Timer -->
+    <!-- TOP BAR -->
     <div id="top-bar">
-        <div>Stake: <span id="play-stake">10 ETB</span></div>
+        <div>Stake: <span id="play-stake" style="color:#ffcc00;">10 ETB</span></div>
         <div>Game ID: <span id="game-id">#1024</span></div>
         <div id="timer-box">Timer: <span id="timer">49</span>s</div>
     </div>
 
     <!-- MAIN CONTAINER -->
     <div id="main-content">
-        <!-- 1ኛ ደረጃ: የካርቴላ መምረጫ (1 - 600) -->
+        
+        <!-- 1ኛ ደረጃ: የካርቴላ መምረጫ ስክሪን -->
         <div id="selection-screen" class="screen">
-            <h3>ካርቴላ ይምረጡ (እስከ 5 ካርቴላ)</h3>
+            <h3 style="color: #ffcc00;">ካርቴላ ይምረጡ (እስከ 5 ካርቴላ)</h3>
             <div id="cartela-grid" class="grid-container"></div>
         </div>
 
-        <!-- የቢንጎ ጨዋታ መጀመሪያ ስክሪን (ከሴኮንድ በኋላ የሚመጣ) -->
+        <!-- 2ኛ ደረጃ: የቢንጎ ጨዋታ መጀመሪያ ስክሪን -->
         <div id="game-screen" class="screen hidden">
-            <!-- የቀጥታ ቁጥር ማሳያ ትንሹ ስክሪን -->
             <div id="live-screen">የተጠራ ቁጥር: <span id="called-number">-</span></div>
             
-            <!-- 5x5 ካርቴላ ማሳያ -->
+            <!-- 5x5 ካርቴላዎች ማሳያ -->
             <div id="my-bingo-cards"></div>
 
-            <!-- B-I-N-G-O ሰንጠረዥ -->
+            <!-- B-I-N-G-O ቦርድ -->
             <div class="bingo-board">
                 <div class="col"><div class="head">B</div><div id="list-B" class="num-list"></div></div>
                 <div class="col"><div class="head">I</div><div id="list-I" class="num-list"></div></div>
@@ -44,36 +202,86 @@
 
         <!-- WALLET SCREEN -->
         <div id="wallet-screen" class="screen hidden">
-            <h3>የኪስ ቦርሳ (Wallet)</h3>
-            <p>Main Wallet: <span id="main-wallet-val">0.00</span> ETB</p>
-            <p>Play Wallet: <span id="play-wallet-val">0.00</span> ETB</p>
-            <p style="font-size:12px; color:gray;">*ለማስያዝ በ 0928361886 ላይ በቀጥታ ይላኩ።</p>
+            <h3 style="color: #ffcc00;">የኪስ ቦርሳ (Wallet)</h3>
+            <div style="background:#1e1e1e; padding:15px; border-radius:8px; text-align:left; max-width:300px; margin:0 auto;">
+                <p>💰 Main Wallet: <strong>10.00 ETB</strong></p>
+                <p>🎮 Play Wallet: <strong>0.00 ETB</strong></p>
+                <hr style="border-color:#333;">
+                <p style="font-size:12px; color:#aaa;">*ገንዘብ ለማስገባት በ 0928361886 ላይ በቀጥታ ያስገቡ።</p>
+            </div>
         </div>
 
         <!-- HISTORY SCREEN -->
         <div id="history-screen" class="screen hidden">
-            <h3>የጨዋታ ታሪክ (History)</h3>
-            <div id="history-list">ምንም መዝገብ የለም</div>
+            <h3 style="color: #ffcc00;">የጨዋታ ታሪክ (History)</h3>
+            <p style="color:#aaa;">ምንም መዝገብ የለም</p>
         </div>
 
         <!-- PROFILE SCREEN -->
         <div id="profile-screen" class="screen hidden">
-            <h3>የእኔ መገለጫ (Profile)</h3>
-            <p>Telegram ID: <span id="prof-tg-id">12345678</span></p>
-            <p>ስልክ: <span id="prof-phone">0928361886</span></p>
-            <p>Main Wallet: <span id="prof-main-w">0</span> ETB</p>
-            <p>Play Wallet: <span id="prof-play-w">0</span> ETB</p>
+            <h3 style="color: #ffcc00;">የእኔ መገለጫ (Profile)</h3>
+            <div style="background:#1e1e1e; padding:15px; border-radius:8px; text-align:left; max-width:300px; margin:0 auto; line-height:2;">
+                <p>👤 Telegram ID: <strong>987654321</strong></p>
+                <p>📞 ስልክ: <strong>0928361886</strong></p>
+                <p>💰 Main Wallet: <strong>10.00 ETB</strong></p>
+                <p>🎮 Play Wallet: <strong>0.00 ETB</strong></p>
+            </div>
         </div>
     </div>
 
     <!-- NAVIGATION BAR -->
     <div id="nav-bar">
-        <button onclick="switchScreen('game')">🎮 Game</button>
-        <button onclick="switchScreen('wallet')">💰 Wallet</button>
-        <button onclick="switchScreen('history')">📜 History</button>
-        <button onclick="switchScreen('profile')">👤 Profile</button>
+        <button id="btn-game" class="nav-btn active" onclick="switchScreen('game')">🎮 Game</button>
+        <button id="btn-wallet" class="nav-btn" onclick="switchScreen('wallet')">💰 Wallet</button>
+		<button id="btn-history" class="nav-btn" onclick="switchScreen('history')">📜 History</button>
+        <button id="btn-profile" class="nav-btn" onclick="switchScreen('profile')">👤 Profile</button>
     </div>
 
-    <script src="app.js"></script>
-</body>
-</html>
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        let selectedCartelas = [];
+        let countdown = 49;
+        let isGameStarted = false;
+        let generatedCardsData = []; // የተፈጠሩት ካርቴላዎች ዳታ
+
+        // 1-600 ካርቴላዎችን በግሪድ ውስጥ መፍጠር
+        const grid = document.getElementById('cartela-grid');
+        for (let i = 1; i <= 600; i++) {
+            let btn = document.createElement('button');
+            btn.innerText = i;
+            btn.classList.add('cartela-btn');
+            btn.onclick = () => toggleCartela(i, btn);
+            grid.appendChild(btn);
+        }
+
+        // ካርቴላ መምረጥ እና ቀለም መቀየር
+        function toggleCartela(num, btn) {
+            if (isGameStarted) return;
+            
+            if (selectedCartelas.includes(num)) {
+                selectedCartelas = selectedCartelas.filter(n => n !== num);
+                btn.classList.remove('selected');
+            } else {
+                if (selectedCartelas.length >= 5) {
+                    alert("ቢበዛ መምረጥ የሚችሉት 5 ካርቴላ ብቻ ነው!");
+                    return;
+                }
+                selectedCartelas.push(num);
+                btn.classList.add('selected');
+            }
+        }
+
+        // የ 5x5 ካርቴላ ማመንጫ ሎጂክ (በየዓምዱ ህግ መሰረት)
+        function generateBingoMatrix(cartelaNumber) {
+            let ranges = {
+                'B': { min: 1, max: 15 },
+                'I': { min: 16, max: 30 },
+                'N': { min: 31, max: 45 },
+                'G': { min: 46, max: 60 },
+                'O': { min: 61, max: 75 }
+            };
+            let matrix = { 'B': [], 'I': [], 'N': [], 'G': [], 'O': [] };
+            let seed = cartelaNumber;
+
+            function seededRandom() {
+                let x = Math.sin(seed++) * 10000;
