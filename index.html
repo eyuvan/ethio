@@ -34,15 +34,14 @@
     <!-- TOP BAR -->
     <div id="top-bar">
         <div>Stake: <span style="color:#ffcc00;">10 ETB</span></div>
-        <div>Game ID: <span>#1024</span></div>
+        <div>Game ID: <span id="game-id-display">#0001</span></div>
         <div id="timer-box">Timer: <span id="timer">49</span>s</div>
     </div>
 
     <!-- MAIN CONTAINER -->
     <div id="main-content">
-        <!-- 1-600 ስክሪን -->
+        <!-- 1-600 ስክሪን (ርዕሱ ተወግዷል) -->
         <div id="selection-screen" class="screen">
-            <h3 style="color: #ffcc00;">ካርቴላ ይምረጡ (እስከ 5 ካርቴላ)</h3>
             <div id="cartela-grid" class="grid-container"></div>
         </div>
 
@@ -93,7 +92,17 @@
         let selectedCartelas = [];
         let countdown = 49;
         let isGameStarted = false;
+        let currentGameId = 1; // ጌም አይዲ መነሻ ቁጥር
+        let timerInterval = null;
+        let callInterval = null;
 
+        // የጌም አይዲን 0001 እያደረገ ፎርማት የሚሰጥ ፈንክሽን
+        function updateGameIdDisplay() {
+            let formattedId = String(currentGameId).padStart(4, '0');
+            document.getElementById('game-id-display').innerText = "#" + formattedId;
+        }
+
+        // 1-600 ካርቴላዎችን በግሪድ ውስጥ መፍጠር
         const grid = document.getElementById('cartela-grid');
         for (let i = 1; i <= 600; i++) {
             let btn = document.createElement('button');
@@ -109,7 +118,10 @@
                 selectedCartelas = selectedCartelas.filter(n => n !== num);
                 btn.classList.remove('selected');
             } else {
-                if (selectedCartelas.length >= 5) { alert("ቢበዛ 5 ካርቴላ ብቻ!"); return; }
+                if (selectedCartelas.length >= 3) { 
+                    alert("ቢበዛ 3 ካርቴላ ብቻ ነው መምረጥ የሚችሉት!"); 
+                    return; 
+                }
                 selectedCartelas.push(num);
                 btn.classList.add('selected');
             }
@@ -142,7 +154,7 @@
         }
 
         function renderSelectedCards() {
-            let container = document.getElementById('my-bingo-cards');
+		let container = document.getElementById('my-bingo-cards');
             container.innerHTML = "";
             selectedCartelas.forEach(num => {
                 let matrix = generateBingoMatrix(num);
@@ -150,7 +162,7 @@
                     <div style="font-weight:bold; color:#ffcc00; margin-bottom:5px;">ካርቴላ #${num}</div>
                     <div class="card-grid">
                         <div class="c-head">B</div><div class="c-head">I</div><div class="c-head">N</div><div class="c-head">G</div><div class="c-head">O</div>;
-						for (let r = 0; r < 5; r++) {
+                for (let r = 0; r < 5; r++) {
                     ['B', 'I', 'N', 'G', 'O'].forEach(l => {
                         if (l === 'N' && r === 2) { html += <div class="cell marked" style="font-size:10px; padding:12px 0;">FREE</div>; }
                         else { let val = matrix[l][r]; html += <div class="cell" id="card-${num}-${l}-${val}">${val}</div>; }
@@ -161,11 +173,20 @@
             });
         }
 
-        let timerInterval = setInterval(() => {
-            countdown--;
+        // ሰዓት ቆጣሪን በስነስርዓት የሚያስጀምር ፈንክሽን
+        function startTimer() {
+            countdown = 49;
             document.getElementById('timer').innerText = countdown;
-            if (countdown <= 0) { clearInterval(timerInterval); isGameStarted = true; startBingoCall(); }
-        }, 1000);
+            timerInterval = setInterval(() => {
+                countdown--;
+                document.getElementById('timer').innerText = countdown;
+                if (countdown <= 0) { 
+                    clearInterval(timerInterval); 
+                    isGameStarted = true; 
+                    startBingoCall(); 
+                }
+            }, 1000);
+        }
 
         function startBingoCall() {
             renderSelectedCards();
@@ -174,23 +195,10 @@
             let allNums = Array.from({length: 75}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
             let idx = 0;
 
-            let callInterval = setInterval(() => {
-                if (idx >= allNums.length) { clearInterval(callInterval); return; }
-                let n = allNums[idx];
-                let l = n<=15?'B':n<=30?'I':n<=45?'N':n<=60?'G':'O';
-                let t = 'list-' + l;
-
-                document.getElementById('called-number').innerText = ${l} - ${n};
-                document.getElementById(t).innerHTML += ${n} ;
-
-                selectedCartelas.forEach(cId => {
-                    let cell = document.getElementById(card-${cId}-${l}-${n});
-                    if (cell) cell.classList.add('marked');
-                });
-                idx++;
-            }, 2500);
-        }
-
-        function switchScreen(s) {
-            document.querySelectorAll('.screen').forEach(scr => scr.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            callInterval = setInterval(() => {
+                if (idx >= allNums.length) { 
+                    clearInterval(callInterval); 
+                    resetGameForNextRound(); // ጨዋታው ሲያልቅ ወደ ቀጣዩ ዙር ማሸጋገር
+                    return; 
+                }
+	</script>
