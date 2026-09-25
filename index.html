@@ -3,67 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Telegram Game</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Edil Bingo</title>
+    <style>
+        body { font-family: sans-serif; background-color: #121212; color: white; margin: 0; padding: 0; text-align: center; }
+        .hidden { display: none !important; }
+        
+        /* 1ኛው ገጽ፡ የመምረጫ ገጽ */
+        .top-bar { display: flex; justify-content: space-around; background: #222; padding: 10px; font-size: 14px; }
+        .timer { color: #ff4757; font-weight: bold; }
+        .cartela-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; height: 250px; overflow-y: scroll; padding: 10px; background: #1a1a1a; }
+        .cartela { background: #333; padding: 12px; border-radius: 4px; cursor: pointer; }
+        .cartela.selected { background: #2ed573; color: black; font-weight: bold; }
+        
+        /* 2ኛው ገጽ፡ የቢንጎ መጫወቻ የቀጥታ ገጽ (ሰዓቱ ሲያልቅ የሚመጣው) */
+        .live-game-page { padding: 15px; }
+        .live-top-bar { display: flex; justify-content: space-between; background: #2ed573; color: black; padding: 12px; font-weight: bold; border-radius: 8px; font-size: 14px; margin-bottom: 15px; }
+        
+        /* ቁጥሩ በተለያየ ቀለም የሚታይበት ትንሽ ስክሪን */
+        .live-screen-container { margin: 20px 0; }
+        .small-live-screen { width: 110px; height: 110px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px rgba(255,255,255,0.2); transition: background 0.3s ease; }
+        
+        /* የቢንጎ ቦርድ (B-I-N-G-O) */
+        .bingo-board { display: flex; justify-content: space-around; background: #1a1a1a; padding: 10px; border-radius: 8px; }
+        .column { width: 18%; }
+        .column h3 { margin: 5px 0; font-size: 20px; color: #ffa502; border-bottom: 2px solid #ffa502; }
+        .column div { display: flex; flex-direction: column; gap: 4px; }
+        .column div span { background: #2d3436; padding: 6px; font-size: 14px; border-radius: 3px; color: #b2bec3; }
+        
+        /* ቁጥሮቹ ሲጠሩ ትንሽ ደመቅ የሚልበት ስታይል */
+        .column div span.called-highlight { background: #2ed573; color: black; font-weight: bold; transform: scale(1.05); box-shadow: 0 0 8px #2ed573; }
+    </style>
 </head>
 <body>
 
-    <!-- Top Bar Info -->
-    <div class="top-bar">
-        <div>Stake: <span id="play-stake">10 ETB</span></div>
-        <div>Main Wallet: <span id="top-main-wallet">100</span></div>
-        <div>Play Wallet: <span id="top-play-wallet">50</span></div>
-        <div class="timer">Timer: <span id="countdown">49</span>s</div>
+    <!-- ================= 1ኛው ገጽ፡ የመምረጫ ስክሪን ================= -->
+    <div id="selection-page">
+        <div class="top-bar">
+            <div>Stake: <span>10 ETB</span></div>
+            <div>Main Wallet: <span>150</span></div>
+            <div>Play Wallet: <span>50</span></div>
+            <div class="timer">Timer: <span id="countdown">49</span>s</div>
+        </div>
+        <h2>ካርቴላ ይምረጡ (1 - 600)</h2>
+        <div class="cartela-grid" id="grid-container"></div>
     </div>
 
-    <!-- Main Content Area -->
-    <div id="main-content" class="content-section">
-        <!-- Game Screen (Default) -->
-        <div id="game-route" class="route active">
-            <h3>ካርቴላ ይምረጡ (1 - 600)</h3>
-            <div class="cartela-container" id="cartela-grid">
-                <!-- JavaScript 1 - 600 ካርቴላዎችን እዚህ ይጨምራል -->
-            </div>
+    <!-- ================= 2ኛው ገጽ፡ የቀጥታ ጨዋታ ስክሪን (ሰዓት ሲያልቅ የሚበራ) ================= -->
+    <div id="live-game-page" class="live-game-page hidden">
+        <!-- 1ኛ መስፈርት፡ አዲሱ Top Bar -->
+        <div class="live-top-bar">
+            <div>Game ID: <span id="lbl-game-id">0000</span></div>
+            <div>Bet: <span id="lbl-bet">-</span></div>
+            <div>ደራሽ: <span id="lbl-derash">-</span></div>
+            <div>Called: <span id="lbl-called-count">0</span></div>
+        </div>
+
+        <!-- 2ኛ መስፈርት፡ በተለያየ ቀለም የሚቀያየር ትንሽ ስክሪን -->
+        <div class="live-screen-container">
+            <div id="live-ball-screen" class="small-live-screen" style="background-color: #ff4757;">-</div>
+        </div>
+
+        <!-- 2ኛ መስፈርት፡ የቢንጎ ቁጥሮች ዝርዝር (1 - 75) -->
+        <div class="bingo-board">
+            <div class="column"><h3>B</h3><div id="list-B"></div></div>
+            <div class="column"><h3>I</h3><div id="list-I"></div></div>
+            <div class="column"><h3>N</h3><div id="list-N"></div></div>
+            <div class="column"><h3>G</h3><div id="list-G"></div></div>
+            <div class="column"><h3>O</h3><div id="list-O"></div></div>
+        </div>
+    </div>
+<script>
+        // --- 1. የካርቴላ መምረጫ አወቃቀር ---
+        const grid = document.getElementById('grid-container');
+        for (let i = 1; i <= 600; i++) {
+            let div = document.createElement('div');
+            div.className = 'cartela';
+            div.innerText = i;
+            div.onclick = function() {
+                document.querySelectorAll('.cartela').forEach(c => c.classList.remove('selected'));
+                div.classList.add('selected');
+            };
+            grid.appendChild(div);
+        }
+
+        // --- 2. የቢንጎ ቦርድ ቁጥሮች ዝርዝር ማውጫ (1-75) ---
+        function createBingoBoard() {
+            for(let i=1; i<=15; i++) document.getElementById('list-B').innerHTML += <span id="cell-${i}">${i}</span>;
+            for(let i=16; i<=30; i++) document.getElementById('list-I').innerHTML += <span id="cell-${i}">${i}</span>;
+            for(let i=31; i<=45; i++) document.getElementById('list-N').innerHTML += <span id="cell-${i}">${i}</span>;
+            for(let i=46; i<=60; i++) document.getElementById('list-G').innerHTML += <span id="cell-${i}">${i}</span>;
+            for(let i=61; i<=75; i++) document.getElementById('list-O').innerHTML += <span id="cell-${i}">${i}</span>;
+        }
+        createBingoBoard();
+
+        // --- 3. ለትንሹ ስክሪን የዘፈቀደ ቀለማት ማውጫ ---
+        const ballColors = ["#ff4757", "#2ed573", "#1e90ff", "#ffa502", "#9b59b6", "#00d2d3", "#ff6b81"];
+
+        // --- 4. የካውንትዳውን ሰዓት ቆጣሪ ሎጂክ ---
+        let timer = 49;
+        const countdownElement = document.getElementById('countdown');
+        
+        const clock = setInterval(() => {
+            timer--;
+            countdownElement.innerText = timer;
+            if (timer <= 0) {
+                clearInterval(clock);
+                // ሰዓቱ 0 ሲል ገጹን ሙሉ ለሙሉ ይቀይረዋል
+                document.getElementById('selection-page').classList.add('hidden');
+                document.getElementById('live-game-page').classList.remove('hidden');
+                
+                // የዌብሶኬት ግንኙነቱን እዚህ ላይ ያስጀምራል
+                connectToBingoWebSocket();
+            }
+        }, 1000);
+
+        // --- 5. የዌብሶኬት እና የላይቭ ዳታ አያያዝ ---
+        def function connectToBingoWebSocket() {
+            const ws = new WebSocket("ws://localhost:8000/ws/game");
             
-            <h3>የእርስዎ 5x5 ካርቴላ</h3>
-            <div class="bingo-card" id="my-bingo-card">
-                <!-- የተመረጠው 5x5 እዚህ ይሰራራል -->
-            </div>
-        </div>
-
-        <!-- Wallet Route -->
-        <div id="wallet-route" class="route">
-            <h3>የኪስ ቦርሳ (Wallet)</h3>
-            <p>Main Wallet: <span id="wallet-main">100</span></p>
-            <p>Play Wallet: <span id="wallet-play">50</span></p>
-        </div>
-
-        <!-- History Route -->
-        <div id="history-route" class="route">
-            <h3>የተጫወቱት ጨዋታዎች ታሪክ</h3>
-            <ul id="history-list">
-                <li>Game #0001 - Lost</li>
-            </ul>
-        </div>
-
-        <!-- Profile Route -->
-        <div id="profile-route" class="route">
-            <h3>የግል መገለጫ (Profile)</h3>
-            <p>Telegram ID: <span id="prof-id">12345678</span></p>
-            <p>Telephone: <span id="prof-phone">+2519...</span></p>
-            <p>Main Wallet: <span id="prof-main">100</span></p>
-            <p>Play Wallet: <span id="prof-play">50</span></p>
-        </div>
-    </div>
-
-    <!-- Navigation Bar -->
-    <nav class="nav-bar">
-        <button onclick="switchRoute('game-route')">Game</button>
-        <button onclick="switchRoute('wallet-route')">Wallet</button>
-        <button onclick="switchRoute('history-route')">History</button>
-        <button onclick="switchRoute('profile-route')">Profile</button>
-    </nav>
-
-    <script src="app.js"></script>
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === "LIVE_DRAW") {
+                    // አዲሱን Top Bar ዳታ መሙላት
+                    document.getElementById('lbl-game-id').innerText = data.game_id;
+                    document.getElementById('lbl-bet').innerText = data.bet;
+                    document.getElementById('lbl-derash').innerText = data.derash;
+                    document.getElementById('lbl-called-count').innerText = data.called_count;
+                    
+                    // ትንሿን ስክሪን ጽሑፍ መቀየር እና ቀለሟን በዘፈቀደ መቀያየር
+                    const ballScreen = document.getElementById('live-ball-screen');
+                    ballScreen.innerText = data.current_call;
+                    const randomColor = ballColors[Math.floor(Math.random() * ballColors.length)];
+                    ballScreen.style.backgroundColor = randomColor;
+                    
+                    // በቦርዱ ላይ ያለውን ቁጥር ቀለም ማድመቅ (ትንሽ ደመቅ ማድረግ)
+                    if (data.history) {
+                        data.history.forEach(item => {
+                            let cell = document.getElementById(cell-${item.number});
+                            if (cell) cell.classList.add('called-highlight');
+                        });
+                    }
+                }
+                
+                if (data.type === "GAME_OVER") {
+                    document.getElementById('live-ball-screen').innerText = "END";
+                    document.getElementById('live-ball-screen').style.backgroundColor = "#333";
+                }
+            };
+        }
+    </script>
 </body>
 </html>
