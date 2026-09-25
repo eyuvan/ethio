@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Live Draw</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="game-page">
+
+    <div class="game-id-header">
+        <h2>Game ID: <span id="game-id">0001</span></h2>
+    </div>
+
+    <!-- የቀጥታ ቁጥር መጥሪያ ትንሽ ስክሪን -->
+    <div class="live-screen">
+        <div id="called-number">B - 6</div>
+    </div>
+
+    <!-- የቢንጎ ቁጥሮች ሰንጠረዥ (B-I-N-G-O List) -->
+    <div class="bingo-board">
+        <div class="column"><h3>B</h3><div id="col-B"></div></div>
+        <div class="column"><h3>I</h3><div id="col-I"></div></div>
+        <div class="column"><h3>N</h3><div id="col-N"></div></div>
+        <div class="column"><h3>G</h3><div id="col-G"></div></div>
+        <div class="column"><h3>O</h3><div id="col-O"></div></div>
+    </div>
+
+    <script>
+        // ቁጥሮችን በየኮለሙ የመደርደር ሎጂክ (1-15, 16-30...)
+        function setupBoard() {
+            for(let i=1; i<=15; i++) document.getElementById('col-B').innerHTML += <span id="num-${i}">${i}</span>;
+            for(let i=16; i<=30; i++) document.getElementById('col-I').innerHTML += <span id="num-${i}">${i}</span>;
+            for(let i=31; i<=45; i++) document.getElementById('col-N').innerHTML += <span id="num-${i}">${i}</span>;
+            for(let i=46; i<=60; i++) document.getElementById('col-G').innerHTML += <span id="num-${i}">${i}</span>;
+            for(let i=61; i<=75; i++) document.getElementById('col-O').innerHTML += <span id="num-${i}">${i}</span>;
+        }
+        setupBoard();
+
+        // በየተወሰነ ሰከንዱ ከባክኤንድ የሚመጡ ቁጥሮችን የማሳያ ምሳሌ
+        const fakeCalls = ["B - 6", "G - 30", "O - 50", "I - 40"];
+        let callIndex = 0;
+        setInterval(() => {
+            if(callIndex < fakeCalls.length) {
+                let call = fakeCalls[callIndex];
+                document.getElementById('called-number').innerText = call;
+                let num = call.split('-')[1].trim();
+                let element = document.getElementById(num-${num});
+                if(element) element.classList.add('called');
+                callIndex++;
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
