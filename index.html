@@ -24,29 +24,24 @@
         .col { width: 19%; background: #1e1e1e; border-radius: 6px; border: 1px solid #333; }
         .head { background: #333; color: #ffcc00; font-weight: bold; padding: 6px 0; }
         .num-list { font-size: 13px; padding: 8px 4px; min-height: 100px; color: #ccc; word-wrap: break-word; }
-        #nav-bar { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 2px solid #333; }
+        #nav-bar { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 2px solid #333; z-index: 1000; }
         .nav-btn { flex: 1; background: transparent; color: #aaa; border: none; padding: 15px 0; font-size: 14px; font-weight: bold; cursor: pointer; }
         .nav-btn.active { color: #ffcc00; border-top: 3px solid #ffcc00; padding-top: 12px; }
     </style>
 </head>
 <body>
 
-    <!-- TOP BAR -->
     <div id="top-bar">
         <div>Stake: <span style="color:#ffcc00;">10 ETB</span></div>
-		<div>Stake: <span style="color:#ffcc00;">20 ETB</span></div>
         <div>Game ID: <span id="game-id-display">#0001</span></div>
         <div id="timer-box">Timer: <span id="timer">49</span>s</div>
     </div>
 
-    <!-- MAIN CONTAINER -->
     <div id="main-content">
-        <!-- 1-600 ስክሪን -->
         <div id="selection-screen" class="screen">
             <div id="cartela-grid" class="grid-container"></div>
         </div>
 
-        <!-- ጨዋታ ስክሪን -->
         <div id="game-screen" class="screen hidden">
             <div id="live-screen">የተጠራ ቁጥር: <span id="called-number">-</span></div>
             <div id="my-bingo-cards"></div>
@@ -58,20 +53,17 @@
                 <div class="col"><div class="head">O</div><div id="list-O" class="num-list"></div></div>
             </div>
         </div>
-		<!-- WALLET -->
+
         <div id="wallet-screen" class="screen hidden">
             <h3>የኪስ ቦርሳ (Wallet)</h3>
             <p>💰 Main Wallet: <strong id="main-wallet-val">0.00</strong> ETB</p>
             <p>🎮 Play Wallet: <strong id="play-wallet-val">0.00</strong> ETB</p>
         </div>
-
-        <!-- HISTORY -->
-        <div id="history-screen" class="screen hidden">
+		<div id="history-screen" class="screen hidden">
             <h3>የጨዋታ ታሪክ</h3>
-            <p style="color:#aaa;">ምንም መዝገብ የለም</p>
+            <div id="history-list" style="color:#aaa;">ምንም መዝገብ የለም</div>
         </div>
 
-        <!-- PROFILE -->
         <div id="profile-screen" class="screen hidden">
             <h3>መገለጫ (Profile)</h3>
             <p>👤 Telegram ID: <strong id="prof-tg-id">-</strong></p>
@@ -81,7 +73,6 @@
         </div>
     </div>
 
-    <!-- NAVIGATION BAR -->
     <div id="nav-bar">
         <button id="btn-game" class="nav-btn active" onclick="switchScreen('game')">🎮 Game</button>
         <button id="btn-wallet" class="nav-btn" onclick="switchScreen('wallet')">💰 Wallet</button>
@@ -97,15 +88,14 @@
         let currentGameId = 1;
         let timerInterval = null;
         let callInterval = null;
-        let tgId = 987654321; // ዴሞ መታወቂያ
+        let tgId = 987654321; 
+        let calledNumbersLog = [];
 
-        // የጌም አይዲ ፎርማት ማደሻ
         function updateGameIdDisplay() {
             let formattedId = String(currentGameId).padStart(4, '0');
             document.getElementById('game-id-display').innerText = "#" + formattedId;
         }
 
-        // 1-600 ካርቴላ ግሪድ መፍጠሪያ
         const grid = document.getElementById('cartela-grid');
         for (let i = 1; i <= 600; i++) {
             let btn = document.createElement('button');
@@ -155,13 +145,13 @@
         }
 
         function renderSelectedCards() {
-		let container = document.getElementById('my-bingo-cards');
+            let container = document.getElementById('my-bingo-cards');
             container.innerHTML = "";
             selectedCartelas.forEach(num => {
                 let matrix = generateBingoMatrix(num);
-                let html = <div class="bingo-card-box">
+                let html = `<div class="bingo-card-box">
                     <div style="font-weight:bold; color:#ffcc00; margin-bottom:5px;">ካርቴላ #${num}</div>
-                    <div class="card-grid">
+					<div class="card-grid">
                         <div class="c-head">B</div><div class="c-head">I</div><div class="c-head">N</div><div class="c-head">G</div><div class="c-head">O</div>;
                 for (let r = 0; r < 5; r++) {
                     ['B', 'I', 'N', 'G', 'O'].forEach(l => {
@@ -194,9 +184,13 @@
             }, 1000);
         }
 
-        async def deductWalletForGame() {
+        async function deductWalletForGame() {
             if (selectedCartelas.length === 0) return true;
             try {
-                let response = await fetch(${API_BASE_URL}/buy-cartela, {
+                let response = await fetch(${API_BASE_URL}/buy-cartela`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ telegram_id: tgId, cartela_count: selectedCartelas.length, stake_amount: 10.0 })
+                });
+                if (response.ok) { loadUserProfile(); return true; }
+                return false;
