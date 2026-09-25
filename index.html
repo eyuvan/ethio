@@ -34,13 +34,14 @@
     <!-- TOP BAR -->
     <div id="top-bar">
         <div>Stake: <span style="color:#ffcc00;">10 ETB</span></div>
+		<div>Stake: <span style="color:#ffcc00;">20 ETB</span></div>
         <div>Game ID: <span id="game-id-display">#0001</span></div>
         <div id="timer-box">Timer: <span id="timer">49</span>s</div>
     </div>
 
     <!-- MAIN CONTAINER -->
     <div id="main-content">
-        <!-- 1-600 ስክሪን (ርዕሱ ተወግዷል) -->
+        <!-- 1-600 ስክሪን -->
         <div id="selection-screen" class="screen">
             <div id="cartela-grid" class="grid-container"></div>
         </div>
@@ -89,20 +90,22 @@
     </div>
 
     <script>
+        const API_BASE_URL = "http://localhost:8000/api"; 
         let selectedCartelas = [];
         let countdown = 49;
         let isGameStarted = false;
-        let currentGameId = 1; // ጌም አይዲ መነሻ ቁጥር
+        let currentGameId = 1;
         let timerInterval = null;
         let callInterval = null;
+        let tgId = 987654321; // ዴሞ መታወቂያ
 
-        // የጌም አይዲን 0001 እያደረገ ፎርማት የሚሰጥ ፈንክሽን
+        // የጌም አይዲ ፎርማት ማደሻ
         function updateGameIdDisplay() {
             let formattedId = String(currentGameId).padStart(4, '0');
             document.getElementById('game-id-display').innerText = "#" + formattedId;
         }
 
-        // 1-600 ካርቴላዎችን በግሪድ ውስጥ መፍጠር
+        // 1-600 ካርቴላ ግሪድ መፍጠሪያ
         const grid = document.getElementById('cartela-grid');
         for (let i = 1; i <= 600; i++) {
             let btn = document.createElement('button');
@@ -141,9 +144,7 @@
 
             for (let l in ranges) {
                 let nums = [];
-                for (let i = ranges[l].min; i <= ranges[l].max; i++) {
-                    nums.push(i);
-                }
+                for (let i = ranges[l].min; i <= ranges[l].max; i++) { nums.push(i); }
                 for (let i = nums.length - 1; i > 0; i--) {
                     let j = Math.floor(rand() * (i + 1));
                     [nums[i], nums[j]] = [nums[j], nums[i]];
@@ -173,32 +174,29 @@
             });
         }
 
-        // ሰዓት ቆጣሪን በስነስርዓት የሚያስጀምር ፈንክሽን
         function startTimer() {
             countdown = 49;
             document.getElementById('timer').innerText = countdown;
-            timerInterval = setInterval(() => {
+            timerInterval = setInterval(async () => {
                 countdown--;
                 document.getElementById('timer').innerText = countdown;
                 if (countdown <= 0) { 
                     clearInterval(timerInterval); 
-                    isGameStarted = true; 
-                    startBingoCall(); 
+                    let paymentSuccess = await deductWalletForGame();
+                    if (paymentSuccess) {
+                        isGameStarted = true; 
+                        startBingoCall(); 
+                    } else {
+                        alert("የሂሳብ ጉድለት ስላለ ጨዋታው አልተጀመረም!");
+                        resetGameForNextRound();
+                    }
                 }
             }, 1000);
         }
 
-        function startBingoCall() {
-            renderSelectedCards();
-            document.getElementById('selection-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            let allNums = Array.from({length: 75}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
-            let idx = 0;
-
-            callInterval = setInterval(() => {
-                if (idx >= allNums.length) { 
-                    clearInterval(callInterval); 
-                    resetGameForNextRound(); // ጨዋታው ሲያልቅ ወደ ቀጣዩ ዙር ማሸጋገር
-                    return; 
-                }
-	</script>
+        async def deductWalletForGame() {
+            if (selectedCartelas.length === 0) return true;
+            try {
+                let response = await fetch(${API_BASE_URL}/buy-cartela, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
