@@ -3,71 +3,624 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edil Bingo</title>
+    <title>Telegram Bingo WebApp</title>
+    <!-- Telegram WebApp JS -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #121212; color: white; margin: 0; padding: 0; text-align: center; }
-        .hidden { display: none !important; }
+        :root {
+            --primary-color: #2481cc;
+            --bg-color: #17212b;
+            --surface-color: #242f3d;
+            --text-color: #f5f5f5;
+            --accent-color: #e53935;
+            --success-color: #4caf50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 70px; /* space for nav bar */
+            box-sizing: border-box;
+        }
+
+        /* Top Bar Info */
+        .top-info-bar {
+            background-color: var(--surface-color);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #313e4b;
+            font-size: 13px;
+        }
+        .top-info-bar div {
+            margin: 2px 0;
+        }
+        .timer-highlight {
+            color: #ffca28;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            padding: 15px;
+        }
+        .screen.active {
+            display: block;
+        }
+
+        /* Card Selection Grid */
+        .grid-600 {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: var(--surface-color);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #313e4b;
+        }
+        .cartela-btn {
+            background-color: #2b394a;
+            color: white;
+            border: 1px solid #3b4d61;
+            padding: 10px 5px;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .cartela-btn.selected {
+            background-color: var(--primary-color);
+            border-color: #fff;
+        }
+
+        /* 5x5 Bingo Grid */
+        .bingo-5x5-container {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            background: #202b36;
+            padding: 8px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 320px;
+        }
+        .bingo-cell {
+            background-color: #2e3d4f;
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            border-radius: 4px;
+            font-size: 16px;
+            border: 1px solid #3d5169;
+        }
+        .bingo-cell.free-space {
+            background-color: #ff9800;
+            color: black;
+            font-size: 11px;
+        }
+
+        /* Game Screen Layout */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            background: var(--surface-color);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .caller-screen {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            padding: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 2px solid #333;
+            margin-bottom: 15px;
+        }
         
-        /* 1ኛው ገጽ፡ የመምረጫ ገጽ */
-        .top-bar { display: flex; justify-content: space-around; background: #222; padding: 10px; font-size: 14px; }
-        .timer { color: #ff4757; font-weight: bold; }
-        .cartela-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; height: 250px; overflow-y: scroll; padding: 10px; background: #1a1a1a; }
-        .cartela { background: #333; padding: 12px; border-radius: 4px; cursor: pointer; }
-        .cartela.selected { background: #2ed573; color: black; font-weight: bold; }
-        
-        /* 2ኛው ገጽ፡ የቢንጎ መጫወቻ የቀጥታ ገጽ */
-        .live-game-page { padding: 15px; }
-        .live-top-bar { display: flex; justify-content: space-between; background: #2ed573; color: black; padding: 12px; font-weight: bold; border-radius: 8px; font-size: 14px; margin-bottom: 15px; }
-        
-        .live-screen-container { margin: 20px 0; }
-        .small-live-screen { width: 110px; height: 110px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px rgba(255,255,255,0.2); transition: background 0.3s ease; }
-        
-        .bingo-board { display: flex; justify-content: space-around; background: #1a1a1a; padding: 10px; border-radius: 8px; }
-        .column { width: 18%; }
-        .column h3 { margin: 5px 0; font-size: 20px; color: #ffa502; border-bottom: 2px solid #ffa502; }
-        .column div { display: flex; flex-direction: column; gap: 4px; }
-        .column div span { background: #2d3436; padding: 6px; font-size: 14px; border-radius: 3px; color: #b2bec3; }
-        
-        .column div span.called-highlight { background: #2ed573; color: black; font-weight: bold; transform: scale(1.05); box-shadow: 0 0 8px #2ed573; }
+        /* Bingo Matrix Display columns */
+        .matrix-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            background: var(--surface-color);
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .matrix-col {
+            background: #1c2630;
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .matrix-letter {
+            font-weight: bold;
+            color: #ffca28;
+            border-bottom: 1px solid #333;
+            padding-bottom: 3px;
+            margin-bottom: 5px;
+        }
+        .matrix-numbers {
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .matrix-num {
+            padding: 2px 0;
+            border-radius: 2px;
+        }
+        .matrix-num.called {
+            background-color: var(--success-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Profile & Wallet Details */
+        .card-view {
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #313e4b;
+        }
+        .card-view h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 1px solid #313e4b;
+            padding-bottom: 5px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #2b3744;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: var(--surface-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #313e4b;
+            z-index: 1000;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #748695;
+            text-decoration: none;
+            font-size: 11px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            flex: 1;
+            padding: 5px 0;
+        }
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        /* Buttons */
+        .action-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ================= 1ኛው ገጽ፡ የመምረጫ ስክሪን ================= -->
-    <div id="selection-page">
-        <div class="top-bar">
-            <div>Stake: <span>10 ETB</span></div>
-            <div>Main Wallet: <span>150</span></div>
-            <div>Play Wallet: <span>50</span></div>
-            <div class="timer">Timer: <span id="countdown">49</span>s</div>
+    <!-- Top Live Info Bar -->
+    <div class="top-info-bar">
+        <div>
+            <div>Stake: <span id="top-stake">10 Birr</span></div>
+            <div>Main: <span id="top-main-wallet">500 Birr</span></div>
         </div>
-        <h2>ካርቴላ ይምረጡ (1 - 600)</h2>
-        <div class="cartela-grid" id="grid-container"></div>
-    </div>
-
-    <!-- ================= 2ኛው ገጽ፡ የቀጥታ ጨዋታ ስክሪን ================= -->
-    <div id="live-game-page" class="live-game-page hidden">
-        <div class="live-top-bar">
-            <div>Game ID: <span id="lbl-game-id">0000</span></div>
-            <div>Bet: <span id="lbl-bet">-</span></div>
-            <div>ደራሽ: <span id="lbl-derash">-</span></div>
-            <div>Called: <span id="lbl-called-count">0</span></div>
-        </div>
-
-        <div class="live-screen-container">
-            <div id="live-ball-screen" class="small-live-screen" style="background-color: #ff4757;">-</div>
-        </div>
-
-        <div class="bingo-board">
-            <div class="column"><h3>B</h3><div id="list-B"></div></div>
-            <div class="column"><h3>I</h3><div id="list-I"></div></div>
-            <div class="column"><h3>N</h3><div id="list-N"></div></div>
-            <div class="column"><h3>G</h3><div id="list-G"></div></div>
-            <div class="column"><h3>O</h3><div id="list-O"></div></div>
+        <div style="text-align: right;">
+            <div>Play Wallet: <span id="top-play-wallet">150 Birr</span></div>
+            <div>Timer: <span id="countdown-timer" class="timer-highlight">49</span>s</div>
         </div>
     </div>
 
-    <!-- የጃቫስክሪፕት ፋይሉን እዚህ ጋር እናገናኛለን -->
-    <script src="app.js"></script>
+    <!-- 1. SCREEN: GAME (Selection & Live Play) -->
+    <div id="screen-game" class="screen active">
+        <!-- Part A: Selection Mode -->
+        <div id="game-selection-mode">
+            <h3>ካርቴላ ይምረጡ (ከ 1 - 600)</h3>
+            <p style="font-size: 13px; color: #aaa;">እባክዎ መጫወት የሚፈልጉትን የካርቴላ ቁጥር ይምረጡ። ሲመርጡ ቀለሙ ይቀየራል።</p>
+            
+            <div class="grid-600" id="cartela-grid-container">
+                <!-- Javascript will generate 600 buttons here -->
+            </div>
+
+            <button class="action-btn" onclick="confirmSelection()">ካርቴላ አረጋግጥ (Play)</button>
+
+            <div class="bingo-5x5-container" id="preview-5x5-section" style="display:none;">
+                <h4>የተመረጠው 5x5 ካርቴላ</h4>
+                <div class="bingo-grid" id="preview-bingo-grid"></div>
+            </div>
+        </div>
+
+        <!-- Part B: Active Bingo Live Mode -->
+        <div id="game-live-mode" style="display: none;">
+            <div class="game-header">
+                <div>Game ID: <strong id="game-id-display">0001</strong></div>
+                <div style="color: #4caf50;">Live Playing...</div>
+            </div>
+
+            <!-- Called number screen mini display -->
+            <div class="caller-screen" id="caller-display">
+                Waiting...
+            </div>
+
+            <!-- Matrix List Columns -->
+            <div class="matrix-container">
+                <!-- B -->
+                <div class="matrix-col">
+                    <div class="matrix-letter">B</div>
+                    <div class="matrix-numbers" id="col-B"></div>
+                </div>
+                <!-- I -->
+                <div class="matrix-col">
+                    <div class="matrix-letter">I</div>
+                    <div class="matrix-numbers" id="col-I"></div>
+                </div>
+                <!-- N -->
+                <div class="matrix-col">
+                    <div class="matrix-letter">N</div>
+                    <div class="matrix-numbers" id="col-N"></div>
+                </div>
+                <!-- G -->
+                <div class="matrix-col">
+                    <div class="matrix-letter">G</div>
+                    <div class="matrix-numbers" id="col-G"></div>
+                </div>
+                <!-- O -->
+                <div class="matrix-col">
+                    <div class="matrix-letter">O</div>
+                    <div class="matrix-numbers" id="col-O"></div>
+                </div>
+            </div>
+            
+            <div class="bingo-5x5-container">
+                <h4>የእርስዎ ካርቴላ</h4>
+                <div class="bingo-grid" id="live-bingo-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SCREEN: WALLET -->
+    <div id="screen-wallet" class="screen">
+        <h2>ዋሌት (Wallet)</h2>
+        <div class="card-view">
+            <h3>የሒሳብ መግለጫ</h3>
+            <div class="info-row">
+                <span>Main Wallet (ዋና ዋሌት):</span>
+                <strong id="wallet-main-display">500 Birr</strong>
+            </div>
+            <div class="info-row">
+                <span>Play Wallet (የመጫወቻ ዋሌት):</span>
+                <strong id="wallet-play-display">150 Birr</strong>
+            </div>
+        </div>
+        <button class="action-btn" style="background-color:#4caf50;">ገንዘብ አስገባ (Deposit)</button>
+        <button class="action-btn" style="background-color:#5c6bc0; margin-top: 8px;">ወደ መጫወቻ ዋሌት አዛውር (Transfer)</button>
+    </div>
+
+    <!-- 3. SCREEN: HISTORY -->
+    <div id="screen-history" class="screen">
+        <h2>የጨዋታ ታሪክ (History)</h2>
+        <div class="card-view">
+            <div class="info-row">
+                <span>Game ID: #0000</span>
+                <span style="color:#e53935;">Lost (-10 Birr)</span>
+            </div>
+            <p style="font-size:12px; margin: 3px 0 0 0; color:#aaa;">ቀን: 2026-09-26 11:30 AM</p>
+        </div>
+        <div class="card-view">
+            <div class="info-row">
+                <span>Game ID: #0012</span>
+                <span style="color:#4caf50;">Won (+180 Birr)</span>
+            </div>
+            <p style="font-size:12px; margin: 3px 0 0 0; color:#aaa;">ቀን: 2026-09-25 04:15 PM</p>
+        </div>
+    </div>
+
+    <!-- 4. SCREEN: PROFILE -->
+    <div id="screen-profile" class="screen">
+        <h2>ፕሮፋይል (Profile)</h2>
+        <div class="card-view">
+            <h3>የተጠቃሚ መረጃ</h3>
+            <div class="info-row">
+                <span>Telegram ID:</span>
+                <span id="prof-tg-id">123456789</span>
+            </div>
+            <div class="info-row">
+                <span>Telephone:</span>
+                <span id="prof-phone">+251912345678</span>
+            </div>
+            <div class="info-row">
+                <span>Main Wallet:</span>
+                <strong id="prof-main-wallet">500 Birr</strong>
+            </div>
+            <div class="info-row">
+                <span>Play Wallet:</span>
+                <strong id="prof-play-wallet">150 Birr</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchScreen('game', this)">
+            <span class="nav-icon">🎮</span>
+            <span>Game</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('wallet', this)">
+            <span class="nav-icon">💼</span>
+            <span>Wallet</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('history', this)">
+            <span class="nav-icon">📜</span>
+            <span>History</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('profile', this)">
+            <span class="nav-icon">👤</span>
+            <span>Profile</span>
+        </button>
+    </nav>
+
+    <script>
+        // Initialize Telegram WebApp setup
+        const tg = window.Telegram?.WebApp;
+        if(tg) {
+            tg.expand();
+            // Dynamically set from Telegram profile context if available
+            if(tg.initDataUnsafe?.user) {
+                document.getElementById('prof-tg-id').innerText = tg.initDataUnsafe.user.id;
+            }
+        }
+
+        // Global State Mock Data
+        let currentGameId = 1;
+        let countdownValue = 49;
+        let selectedCartelaNum = null;
+        let isGameLiveActive = false;
+
+        // Populate Matrix List Numbers in UI
+        function initMatrixDisplay() {
+            const cols = {
+                'B': { min: 1, max: 15, el: document.getElementById('col-B') },
+                'I': { min: 16, max: 30, el: document.getElementById('col-I') },
+                'N': { min: 31, max: 45, el: document.getElementById('col-N') },
+                'G': { min: 46, max: 60, el: document.getElementById('col-G') },
+                'O': { min: 61, max: 75, el: document.getElementById('col-O') }
+            };
+
+            for (let letter in cols) {
+                cols[letter].el.innerHTML = '';
+                for (let i = cols[letter].min; i <= cols[letter].max; i++) {
+                    const numDiv = document.createElement('div');
+                    numDiv.className = 'matrix-num';
+                    numDiv.id = `matrix-${letter}-${i}`;
+                    numDiv.innerText = i;
+                    cols[letter].el.appendChild(numDiv);
+                }
+            }
+        }
+
+        // Generate the grid of 600 Cartelas
+        const gridContainer = document.getElementById('cartela-grid-container');
+        for (let i = 1; i <= 600; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'cartela-btn';
+            btn.innerText = i;
+            btn.onclick = function() {
+                // Toggle structure or single select
+                document.querySelectorAll('.cartela-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedCartelaNum = i;
+                generate5x5Card(i, 'preview-bingo-grid');
+                document.getElementById('preview-5x5-section').style.display = 'block';
+            };
+            gridContainer.appendChild(btn);
+        }
+
+        // Deterministic Pseudo-random 5x5 card generation based on card sequence seed number
+        function generate5x5Card(seed, targetGridId) {
+            const gridEl = document.getElementById(targetGridId);
+            gridEl.innerHTML = '';
+            
+            const ranges = [
+                { min: 1, max: 15 },  // B
+                { min: 16, max: 30 }, // I
+                { min: 31, max: 45 }, // N
+                { min: 46, max: 60 }, // G
+                { min: 61, max: 75 }  // O
+            ];
+
+            let cardMatrix = [[],[],[],[],[]];
+
+            for(let col=0; col<5; col++) {
+                let pool = [];
+                for(let n=ranges[col].min; n<=ranges[col].max; n++) pool.push(n);
+                
+                // Deterministic shuffle using seed syntax
+                let mockSeed = seed + col * 100;
+                for (let i = pool.length - 1; i > 0; i--) {
+                    mockSeed = (mockSeed * 9301 + 49297) % 233280;
+                    let j = Math.floor((mockSeed / 233280) * (i + 1));
+                    let temp = pool[i];
+                    pool[i] = pool[j];
+                    pool[j] = temp;
+                }
+                cardMatrix[col] = pool.slice(0, 5);
+            }
+
+            // Render row-by-row
+            for(let row=0; row<5; row++) {
+                for(let col=0; col<5; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'bingo-cell';
+                    
+                    if(row === 2 && col === 2) {
+                        cell.className = 'bingo-cell free-space';
+                        cell.innerText = 'FREE';
+                    } else {
+                        const val = cardMatrix[col][row];
+                        cell.innerText = val;
+                        cell.id = `${targetGridId}-val-${val}`;
+                    }
+                    gridEl.appendChild(cell);
+                }
+            }
+        }
+
+        function confirmSelection() {
+            if(!selectedCartelaNum) {
+                alert("እባክዎ መጀመሪያ ካርቴላ ይምረጡ!");
+                return;
+            }
+            alert(`ካርቴላ ቁጥር ${selectedCartelaNum} ተመርጧል! ጨዋታው ሲጀምር ይጠብቁ።`);
+        }
+
+        // Screen navigation switcher
+        function switchScreen(screenName, navButton) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`screen-${screenName}`).classList.add('active');
+            navButton.classList.add('active');
+        }
+
+        // Countdown Timer Engine Simulation
+        initMatrixDisplay();
+        const timerInterval = setInterval(() => {
+            if(countdownValue > 0) {
+                countdownValue--;
+                document.getElementById('countdown-timer').innerText = countdownValue;
+            } else {
+                // Countdown ends - trigger live screen transitions
+                if(!isGameLiveActive) {
+                    triggerLiveGameMode();
+                }
+            }
+        }, 1000);
+
+        // Simulation transition when counter reaches zero
+        function triggerLiveGameMode() {
+            isGameLiveActive = true;
+            
+            // Format Game ID (0001, 0002, etc.)
+            let paddedId = String(currentGameId).padStart(4, '0');
+            document.getElementById('game-id-display').innerText = paddedId;
+            
+            // UI state complete transition
+            document.getElementById('game-selection-mode').style.display = 'none';
+            document.getElementById('game-live-mode').style.display = 'block';
+            
+            // Fallback default selection if user skipped picking manually
+            if(!selectedCartelaNum) selectedCartelaNum = Math.floor(Math.random() * 600) + 1;
+            generate5x5Card(selectedCartelaNum, 'live-bingo-grid');
+
+            // Simulate Live Caller Screen sequence strings
+            const mockCalledNumbers = [
+                { letter: 'B', num: 6 },
+                { letter: 'G', num: 30 }, // structured according to user prompt request
+                { letter: 'G', num: 75 },
+                { letter: 'O', num: 50 },
+                { letter: 'I', num: 40 }
+            ];
+            
+            let callIndex = 0;
+            const callerInterval = setInterval(() => {
+                if(callIndex < mockCalledNumbers.length) {
+                    let currentCall = mockCalledNumbers[callIndex];
+                    let callStr = `${currentCall.letter} - ${currentCall.num}`;
+                    
+                    // Update display
+                    document.getElementById('caller-display').innerText = callStr;
+                    
+                    // Highlight inside matrix panels
+                    let targetMatrixCell = document.getElementById(`matrix-${currentCall.letter}-${currentCall.num}`);
+                    if(targetMatrixCell) targetMatrixCell.classList.add('called');
+                    
+                    // Highlight on user's live playable card grid if hit matches
+                    let targetLiveCell = document.getElementById(`live-bingo-grid-val-${currentCall.num}`);
+                    if(targetLiveCell) {
+                        targetLiveCell.style.backgroundColor = '#4caf50';
+                        targetLiveCell.style.color = '#fff';
+                    }
+
+                    callIndex++;
+                } else {
+                    clearInterval(callerInterval);
+                    // Reset game structure state after 8 seconds of finish for replay simulation
+                    setTimeout(() => {
+                        resetToNextGameCycle();
+                    }, 8000);
+                }
+            }, 2500);
+        }
+
+        function resetToNextGameCycle() {
+            currentGameId++;
+            countdownValue = 49;
+            isGameLiveActive = false;
+            selectedCartelaNum = null;
+            
+            document.getElementById('countdown-timer').innerText = countdownValue;
+            document.getElementById('caller-display').innerText = "Waiting...";
+            document.getElementById('game-selection-mode').style.display = 'block';
+            document.getElementById('game-live-mode').style.display = 'none';
+            document.getElementById('preview-5x5-section').style.display = 'none';
+            
+            // Clean active colored buttons
+            document.querySelectorAll('.cartela-btn').forEach(b => b.classList.remove('selected'));
+            initMatrixDisplay();
+        }
+    </script>
 </body>
 </html>
