@@ -1,25 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. UI Elements Mapping
+    // 1. DOM Elements & State
     const cardsGrid = document.getElementById("cards-grid");
     const bingoCardContainer = document.getElementById("bingo-card-container");
     const bingoCardGrid = document.getElementById("bingo-card-grid");
     const timerElement = document.getElementById("countdown-timer");
     const screen1 = document.getElementById("screen-1");
     const screen2 = document.getElementById("screen-2");
-    
-    // Live Game Dashboard Elements
     const gameIdElement = document.getElementById("game-id");
-    const liveBetElement = document.getElementById("live-bet");
-    const liveDerashElement = document.getElementById("live-derash");
-    const liveStakeElement = document.getElementById("live-stake");
-    const calledCountElement = document.getElementById("called-count");
     const callerScreen = document.getElementById("caller-screen");
-    const topBar = document.getElementById("top-bar");
 
-    // Wallets display fields
-    const topPlayWallet = document.getElementById("top-play-wallet");
-    
-    // Bottom navigation setup
+    // Navigation Sections
     const sections = {
         game: document.getElementById("game-section"),
         wallet: document.getElementById("wallet-section"),
@@ -28,7 +18,14 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const navButtons = document.querySelectorAll(".nav-btn");
 
-    // Board columns
+    let selectedTicket = null;
+    let countdownValue = 49;
+    let gameIdCounter = 1;
+    let timerInterval = null;
+    let callerInterval = null;
+    let calledNumbers = [];
+
+    // BINGO Columns Board References
     const columnsData = {
         B: document.getElementById("col-B"),
         I: document.getElementById("col-I"),
@@ -37,60 +34,53 @@ document.addEventListener("DOMContentLoaded", () => {
         O: document.getElementById("col-O")
     };
 
-    // 2. State Variables
-    let selectedTicket = null;
-    let countdownValue = 49;
-    let gameIdCounter = 1;
-    let totalCalledNumbersCount = 0;
-    
-    // Mock simulation defaults for Stake calculations
-    let currentStakeAmount = 10; // Change to 20 for custom testing
-    let simulatedPlayersCount = Math.floor(Math.random() * 30) + 15; // Simulated players (15-45 players)
-
-    // Apply Clause 3: 10 Birr Bonus initialization instantly for new registrations
-    topPlayWallet.innerText = "10";
-
-    // 3. Generate 1 to 600 Selection Tickets Loop Block
+    // 2. Generate 1 to 600 Selection Tickets
     for (let i = 1; i <= 600; i++) {
         const cardBox = document.createElement("div");
         cardBox.className = "card-box";
         cardBox.innerText = i;
         cardBox.addEventListener("click", () => {
+            // Remove selection from previous
             document.querySelectorAll(".card-box").forEach(el => el.classList.remove("selected"));
             cardBox.classList.add("selected");
             selectedTicket = i;
-            liveBetElement.innerText = "1"; // User picked 1 card
             
-            generate5x5BingoMatrix();
+            // Generate and show the 5x5 Grid for this ticket
+            generateBingoCard();
         });
         cardsGrid.appendChild(cardBox);
     }
 
-    // 4. Matrix Generation Engine
-    function generate5x5BingoMatrix() {
+    // 3. Generate 5x5 Bingo Card Matrix
+    function generateBingoCard() {
         bingoCardGrid.innerHTML = "";
         bingoCardContainer.style.display = "block";
 
-        const getUniqueRandomRange = (min, max, count) => {
-            let list = [];
-            while (list.length < count) {
+        // Helper to get random numbers based on standard BINGO constraints
+        const getRandomRange = (min, max, count) => {
+            let nums = [];
+            while (nums.length < count) {
                 let r = Math.floor(Math.random() * (max - min + 1)) + min;
-                if (!list.includes(r)) list.push(r);
+                if (!nums.includes(r)) nums.push(r);
             }
-            return list;
+            return nums;
         };
 
-        const bColumn = getUniqueRandomRange(1, 15, 5);
-        const iColumn = getUniqueRandomRange(16, 30, 5);
-        const nColumn = getUniqueRandomRange(31, 45, 5);
-        const gColumn = getUniqueRandomRange(46, 60, 5);
-        const oColumn = getUniqueRandomRange(61, 75, 5);
+        const bNums = getRandomRange(1, 15, 5);
+        const iNums = getRandomRange(16, 30, 5);
+        const nNums = getRandomRange(31, 45, 5);
+        const gNums = getRandomRange(46, 60, 5);
+        const oNums = getRandomRange(61, 75, 5);
 
+        // Build 5x5 Matrix (Row by Row)
         for (let row = 0; row < 5; row++) {
-            const cellsRow = [bColumn[row], iColumn[row], nColumn[row], gColumn[row], oColumn[row]];
-            cellsRow.forEach((num, colIdx) => {
+            const rowData = [bNums[row], iNums[row], nNums[row], gNums[row], oNums[row]];
+            
+            rowData.forEach((num, colIdx) => {
                 const cell = document.createElement("div");
                 cell.className = "bingo-cell";
+                
+                // Center cell (Row 2, Column 2) is "FREE" space
                 if (row === 2 && colIdx === 2) {
                     cell.innerText = "FREE";
                     cell.classList.add("free-space");
@@ -102,129 +92,93 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // 5. Populate BINGO Columns (B:1-15, I:16-30, N:31-45, G:46-60, O:61-75)
-    const initMasterBoard = () => {
-        const structuralRanges = { B:, I:, N:, G:, O: [61,75] };
-        for (let col in structuralRanges) {
-            columnsData[col].innerHTML = "";
-            let start = structuralRanges[col][0];
-            let end = structuralRanges[col][1];
-            for (let i = start; i <= end; i++) {
+    // 4. Populate BINGO Columns (B:1-15, I:16-30, N:31-45, G:46-60, O:61-75)
+    const setupBoardColumns = () => {
+        const ranges = { B:, I:, N:, G:, O: [61,75] };
+        for (let col in ranges) {
+            columnsData[col].innerHTML = ""; // Clear board
+            for (let i = ranges[col][0]; i <= ranges[col][1]; i++) {
                 const item = document.createElement("div");
                 item.className = "board-item";
-                item.id = `master-num-${i}`;
+                item.id = `board-num-${i}`;
                 item.innerText = i;
                 columnsData[col].appendChild(item);
             }
         }
     };
-    initMasterBoard();
+    setupBoardColumns();
 
-    // 6. Countdown Timer Trigger
-    let countdownInterval = setInterval(() => {
+    // 5. Countdown Timer Logic (From 49 down to 0)
+    timerInterval = setInterval(() => {
         countdownValue--;
         timerElement.innerText = countdownValue;
+
         if (countdownValue <= 0) {
-            clearInterval(countdownInterval);
-            transitionToLiveScreenMode();
+            clearInterval(timerInterval);
+            switchToLiveGame();
         }
     }, 1000);
 
-    // 7. Transition To Live Mode (Clause 1 Requirements)
-    function transitionToLiveScreenMode() {
-        topBar.style.display = "none"; // Hide countdown header bar completely
+    // 6. Switch to Screen 2 (Live Game Mode)
+    function switchToLiveGame() {
         screen1.style.display = "none";
         screen2.style.display = "block";
-
-        // Assign top live statistics panel calculations data info elements
-        gameIdElement.innerText = String(gameIdCounter).padStart(4, '0');
-        liveStakeElement.innerText = currentStakeAmount;
         
-        // Calculate Derash formula parameter logic checks
-        let calculatedDerashPayout = 0;
-        if (currentStakeAmount === 10) {
-            calculatedDerashPayout = simulatedPlayersCount * 8;
-        } else if (currentStakeAmount === 20) {
-            calculatedDerashPayout = simulatedPlayersCount * 16;
-        } else {
-            calculatedDerashPayout = simulatedPlayersCount * (currentStakeAmount * 0.8);
-        }
-        liveDerashElement.innerText = calculatedDerashPayout;
-
-        triggerLiveBingoCaller();
+        // Pad Game ID (e.g., 0001)
+        gameIdElement.innerText = String(gameIdCounter).padStart(4, '0');
+        
+        startBingoCalling();
     }
 
-    // 8. Female Voice Announcer Logic Engine Function Block (Clause 2 Requirements)
-    function speakBingoNumberFemaleVoice(textToSpeak) {
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            const voices = window.speechSynthesis.getVoices();
-            
-            // Attempt to assign a default standard english female voice profile option matches
-            const femaleVoice = voices.find(voice => 
-                voice.name.toLowerCase().includes('female') || 
-                voice.name.toLowerCase().includes('zira') || 
-                voice.name.toLowerCase().includes('google uk english female')
-            );
-            if (femaleVoice) {
-                utterance.voice = femaleVoice;
-            }
-            utterance.rate = 1.0; 
-            window.speechSynthesis.speak(utterance);
-        }
-    }
-    // Pre-trigger voice initialization engine loading profiles safely
-    if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
+    // 7. Live Bingo Calling Engine (Every 3 seconds)
+    function startBingoCalling() {
+        let allNumbers = [];
+        for (let i = 1; i <= 75; i++) allNumbers.push(i);
+        
+        // Shuffle numbers
+        allNumbers.sort(() => Math.random() - 0.5);
 
-    // 9. Live Random Bingo Game Caller loop sequence iteration block
-    function triggerLiveBingoCaller() {
-        let executionPool = [];
-        for (let i = 1; i <= 75; i++) executionPool.push(i);
-        executionPool.sort(() => Math.random() - 0.5);
-
-        let gameLoopInterval = setInterval(() => {
-            if (executionPool.length === 0) {
-                clearInterval(gameLoopInterval);
-                callerScreen.innerText = "OVER";
+        callerInterval = setInterval(() => {
+            if (allNumbers.length === 0) {
+                clearInterval(callerInterval);
+                callerScreen.innerText = "GAME OVER";
                 return;
             }
 
-            let extractedNum = executionPool.pop();
-            let letterPrefix = "";
+            let currentNum = allNumbers.pop();
+            let prefix = "";
 
-            if (extractedNum >= 1 && extractedNum <= 15) letterPrefix = "B";
-            else if (extractedNum >= 16 && extractedNum <= 30) letterPrefix = "I";
-            else if (extractedNum >= 31 && extractedNum <= 45) letterPrefix = "N";
-            else if (extractedNum >= 46 && extractedNum <= 60) letterPrefix = "G";
-            else if (extractedNum >= 61 && extractedNum <= 75) letterPrefix = "O";
+            if (currentNum >= 1 && currentNum <= 15) prefix = "B";
+            else if (currentNum >= 16 && currentNum <= 30) prefix = "I";
+            else if (currentNum >= 31 && currentNum <= 45) prefix = "N";
+            else if (currentNum >= 46 && currentNum <= 60) prefix = "G";
+            else if (currentNum >= 61 && currentNum <= 75) prefix = "O";
 
-            let compiledAnnouncement = `${letterPrefix} - ${extractedNum}`;
-            callerScreen.innerText = compiledAnnouncement;
-            
-            // Speak called element aloud in female translation structure instantly
-            speakBingoNumberFemaleVoice(`${letterPrefix} ${extractedNum}`);
+            // Update mini screen display
+            callerScreen.innerText = `${prefix} - ${currentNum}`;
 
-            // Increment Called statistics dashboard tracker
-            totalCalledNumbersCount++;
-            calledCountElement.innerText = totalCalledNumbersCount;
-
-            // Illuminate target layout box number match node item row selector
-            const exactTargetElementNode = document.getElementById(`master-num-${extractedNum}`);
-            if (exactTargetElementNode) {
-                exactTargetElementNode.classList.add("called");
+            // Light up corresponding number on the master board
+            const boardItem = document.getElementById(`board-num-${currentNum}`);
+            if (boardItem) {
+                boardItem.classList.add("called");
             }
         }, 3000);
     }
 
-    // 10. Navigation Tabs Click Handlers Switch Layout Panels Control
+    // 8. Navigation Bar Click Handler
     navButtons.forEach(button => {
         button.addEventListener("click", () => {
-            const destinationSectionKey = button.getAttribute("data-section");
-            navButtons.forEach(btn => btn.classList.remove("active"));
-            for (let key in sections) { sections[key].style.display = "none"; }
+            const targetSection = button.getAttribute("data-section");
 
+            // Remove active class from all buttons and sections
+            navButtons.forEach(btn => btn.classList.remove("active"));
+            for (let key in sections) {
+                sections[key].style.display = "none";
+            }
+
+            // Activate chosen section
             button.classList.add("active");
-            sections[destinationSectionKey].style.display = "block";
+            sections[targetSection].style.display = "block";
         });
     });
 });
