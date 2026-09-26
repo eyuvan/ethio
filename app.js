@@ -21,7 +21,7 @@ function generateBingoCard5x5(cartelaNumber) {
     
     previewContainer.innerHTML = ''; 
     
-    // የቢንጎ አምዶች የቁጥር ክልሎች (ሙሉ በሙሉ ተሞልተዋል)
+    // የቢንጎ አምዶች የቁጥር ክልሎች (አፃፃፉ ሙሉ በሙሉ ተስተካክሏል)
     const ranges = {
         B:,
         I:,
@@ -73,7 +73,7 @@ function switchTab(routeId, btnElement) {
 // --- 4. የቢንጎ ቦርድ ቁጥሮች ዝርዝር ማውጫ (1-75) ---
 function createBingoBoard() {
     for(let i=1; i<=15; i++) { document.getElementById('list-B').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
-    for(let i=16; i<=30; i++) { document.getElementById('list-I').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
+    for(let i=16; i<=30; i++) { document.getElementById('list-B2').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
     for(let i=31; i<=45; i++) { document.getElementById('list-N').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
     for(let i=46; i<=60; i++) { document.getElementById('list-G').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
     for(let i=61; i<=75; i++) { document.getElementById('list-O').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
@@ -103,9 +103,8 @@ if (countdownElement) {
 // --- 7. የዌብሶኬት ግንኙነት ---
 function connectToBingoWebSocket() {
     const ws = new WebSocket("ws://localhost:8000/ws/game");
-    
-    ws.onmessage = function(event) {
-		const data = JSON.parse(event.data);
+	ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
         
         if (data.type === "LIVE_DRAW") {
             document.getElementById('lbl-game-id').innerText = data.game_id;
