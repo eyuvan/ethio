@@ -21,7 +21,7 @@ function generateBingoCard5x5(cartelaNumber) {
     
     previewContainer.innerHTML = ''; 
     
-    // የቢንጎ አምዶች ትክክለኛ የቁጥር ክልሎች (አሁን ሙሉ በሙሉ ተሞልተዋል)
+    // የቢንጎ አምዶች የቁጥር ክልሎች (ሙሉ በሙሉ ተሞልተዋል)
     const ranges = {
         B:,
         I:,
@@ -38,6 +38,7 @@ function generateBingoCard5x5(cartelaNumber) {
         let pool = [];
         for (let n = min; n <= max; n++) pool.push(n);
         
+        // ማደባለቅ
         pool.sort(function() { return 0.5 - Math.random(); });
         cardData[key] = pool.slice(0, 5); 
     }
@@ -48,6 +49,7 @@ function generateBingoCard5x5(cartelaNumber) {
             let cell = document.createElement('div');
             cell.className = 'bingo-cell';
             
+            // መካከለኛው ክፍል FREE መሆን አለበት
             if (row === 2 && col === 2) {
                 cell.innerText = "FREE";
                 cell.classList.add('free');
@@ -103,8 +105,9 @@ function connectToBingoWebSocket() {
     const ws = new WebSocket("ws://localhost:8000/ws/game");
     
     ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-		if (data.type === "LIVE_DRAW") {
+		const data = JSON.parse(event.data);
+        
+        if (data.type === "LIVE_DRAW") {
             document.getElementById('lbl-game-id').innerText = data.game_id;
             document.getElementById('lbl-bet').innerText = data.bet;
             document.getElementById('lbl-derash').innerText = data.derash;
