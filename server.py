@@ -1,5 +1,6 @@
 import asyncio
 import random
+import sqlite3
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,28 +14,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# የጨዋตาው ሁኔታ መቆጣጠሪያ ክፍል
 class BingoGame:
     def init(self):
-        self.game_id = 1
-        self.stake = 10  # በነባሪ (Default) 10 ብር (ተጫዋቹ 10 ወይም 20 መምረጥ ይችላል)
-        self.players_count = 5  # ለምሳሌ 5 ተጫዋቾች ገብተዋል ብለን ብናስብ
+        self.game_id = 1  # መነሻ ጨዋታ መለያ ቁጥር
+        self.stake = 10
+        self.players_count = 5
         self.all_numbers = list(range(1, 76))
         self.called_numbers = []
         self.current_call = "በመጠባበቅ ላይ..."
         self.is_running = False
 
     def calculate_derash(self):
-        # 1ኛ መስፈርት፡ የደራሽ ስሌት (Stake 10 ከሆነ በ 8፣ 20 ከሆነ በ 16 ይባዛል)
         if self.stake == 10:
             return self.players_count * 8
         elif self.stake == 20:
             return self.players_count * 16
         return 0
 
-    def reset_game(self, chosen_stake=10, active_players=5):
+    def reset_game(self):
+        # ጨዋታው ሲያልቅ የመለያ ቁጥሩን በ 1 ጨምሮ በቅደም ተከተል (0001, 0002...) ማስቀጠል
         self.game_id += 1
-        self.stake = chosen_stake
-        self.players_count = active_players
         self.all_numbers = list(range(1, 76))
         random.shuffle(self.all_numbers)
         self.called_numbers = []
@@ -56,19 +56,18 @@ class BingoGame:
             self.current_call = f"{letter}-{num}"
             self.called_numbers.append({"number": num, "letter": letter})
             return {
-                "game_id": f"{self.game_id:04d}",
+                "game_id": f"{self.game_id:04d}",  # ቅርጸቱን 0001, 0002 ማድረጊያ
                 "bet": f"{self.stake} ETB",
                 "derash": f"{self.calculate_derash()} ETB",
-                "called_count": len(self.called_numbers), # የጥሪዎች ብዛት
-                "call": self.current_call,
-                "num": num,
-                "letter": letter
+                "called_count": len(self.called_numbers),
+                "call": self.current_call
             }
         self.is_running = False
         return None
 
 bingo_game = BingoGame()
 
+# የዌብሶኬት ግንኙነት መቆጣጠሪያ
 class ConnectionManager:
     def init(self):
         self.active_connections: list[WebSocket] = []
@@ -84,12 +83,11 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+# የቢንጎ ቁጥር መጥሪያ ሉፕ (በየ 3 ሰከንዱ ቁጥር የሚያወጣ)
 async def bingo_game_loop():
     while True:
-        # ለምሳሌ በየመሀሉ 10 ወይም 20 ብር በራንደም እየመረጠ እንዲጫወት ለማሳየት
-        current_stake = random.choice([10, 20])
-        current_players = random.randint(3, 12)
-        bingo_game.reset_game(chosen_stake=current_stake, active_players=current_players)
+        bingo_game.reset_game()
+        print(f"አዲስ ጨዋታ ተጀመረ! Game ID: {bingo_game.game_id:04d}")
         
         while bingo_game.is_running and bingo_game.all_numbers:
             data = bingo_game.draw_number()
@@ -103,15 +101,34 @@ async def bingo_game_loop():
                     "current_call": data["call"],
                     "history": bingo_game.called_numbers
                 })
-            await asyncio.sleep(3) # በየ 3 ሰከንዱ ቁጥር ይወጣል
+            await asyncio.sleep(3)
             
         await manager.broadcast({"type": "GAME_OVER"})
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
 
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(bingo_game_loop())
-	@app.websocket("/ws/game")
+
+# ----------------- አዲስ የተጨመረ፡ የተጠቃሚ ዳታ ማገናኛ API -----------------
+@app.get("/api/user/{tg_id}")
+async def get_user_data(tg_id: int):
+    # ከተጫዋቹ ID ጋር ዳታቤዙን በማገናኘት የቦነስ እና ዋሌት መረጃዎችን ማንበብ
+    conn = sqlite3.connect("bingo_game.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT main_wallet, play_wallet FROM users WHERE tg_id = ?", (tg_id,))
+    user_data = cursor.fetchone()
+    conn.close()
+    
+    if user_data:
+        return {
+            "success": True,
+            "main_wallet": user_data[0],
+            "play_wallet": user_data[1]
+        }
+    return {"success": False, "main_wallet": 0, "play_wallet": 0}
+
+@app.websocket("/ws/game")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:

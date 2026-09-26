@@ -1,3 +1,39 @@
+// የቴሌግራም ዌብአፕ መረጃዎችን ማግኘት
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+let telegramUserId = 400234494; // ነባሪ (Fallback) መለያ ቁጥር 
+
+if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    telegramUserId = tg.initDataUnsafe.user.id;
+    // ፕሮፋይል ገጽ ላይ የቴሌግራም ID ቁጥርን ማሳየት
+    if(document.getElementById('prof-tg-id')) {
+        document.getElementById('prof-tg-id').innerText = telegramUserId;
+    }
+}
+
+// ከባክኤንድ API ላይ የተጫዋቹን ቦነስ እና ቀሪ ሂሳብ የመጫኛ ተግባር
+function loadUserWalletData() {
+    fetch('http://localhost:8000/api/user/' + telegramUserId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // በዋናው ገጽ ላይ ያሉትን የዋሌት ማሳያዎች ማዘመን
+                document.getElementById('top-main-wallet').innerText = data.main_wallet;
+                document.getElementById('top-play-wallet').innerText = data.play_wallet;
+                
+                // በWallet እና Profile ታቦች ውስጥ ያሉትን ማሳያዎች ማዘመን
+                if(document.getElementById('wallet-main-val')) document.getElementById('wallet-main-val').innerText = data.main_wallet;
+                if(document.getElementById('wallet-play-val')) document.getElementById('wallet-play-val').innerText = data.play_wallet;
+                if(document.getElementById('prof-main-val')) document.getElementById('prof-main-val').innerText = data.main_wallet;
+                if(document.getElementById('prof-play-val')) document.getElementById('prof-play-val').innerText = data.play_wallet;
+            }
+        })
+        .catch(err => console.log('የተጠቃሚ ሂሳብ መጫን አልተቻለም:', err));
+}
+// ገጹ ሲከፈት ወዲያውኑ የዳታቤዝ መረጃውን እንዲጭን ማድረግ
+window.onload = function() {
+    loadUserWalletData();
+}
+
 // --- 1. የካርቴላ መምረጫ አወቃቀር (1-600) ---
 const grid = document.getElementById('grid-container');
 if (grid) {
