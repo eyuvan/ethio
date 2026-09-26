@@ -14,60 +14,62 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# የጨዋตาው ሁኔታ መቆጣጠሪያ ክፍል
 class BingoGame:
     def init(self):
-        self.game_id = 1  # መነሻ ጨዋታ መለያ ቁጥር
+        self.game_id = 1
         self.stake = 10
-        self.players_count = 5
+        self.players_count = 0
         self.all_numbers = list(range(1, 76))
         self.called_numbers = []
         self.current_call = "በመጠባበቅ ላይ..."
         self.is_running = False
+        self.active_player_cards = {}  # የእያንዳንዱን ተጫዋች 5x5 ካርቴላ ለመያዝ {tg_id: list_of_25_cells}
 
     def calculate_derash(self):
-        if self.stake == 10:
-            return self.players_count * 8
-        elif self.stake == 20:
-            return self.players_count * 16
+        if self.stake == 10: return self.players_count * 8
+        elif self.stake == 20: return self.players_count * 16
         return 0
 
     def reset_game(self):
-        # ጨዋታው ሲያልቅ የመለያ ቁጥሩን በ 1 ጨምሮ በቅደም ተከተል (0001, 0002...) ማስቀጠል
         self.game_id += 1
         self.all_numbers = list(range(1, 76))
         random.shuffle(self.all_numbers)
         self.called_numbers = []
         self.current_call = "ተጀመረ!"
         self.is_running = True
+        self.active_player_cards = {} # የድሮዎቹን ማጽዳት
+        self.players_count = 0
 
-    def get_letter(self, num):
-        if 1 <= num <= 15: return "B"
-        elif 16 <= num <= 30: return "I"
-        elif 31 <= num <= 45: return "N"
-        elif 46 <= num <= 60: return "G"
-        elif 61 <= num <= 75: return "O"
-        return ""
+    def check_matrix_win(self, cells):
+        # 5x5 ማትሪክስ መስራት
+        matrix = [cells[i:i+5] for i in range(0, 25, 5)]
+        live_calls = [item["number"] for item in self.called_numbers]
 
-    def draw_number(self):
-        if self.all_numbers:
-            num = self.all_numbers.pop(0)
-            letter = self.get_letter(num)
-            self.current_call = f"{letter}-{num}"
-            self.called_numbers.append({"number": num, "letter": letter})
-            return {
-                "game_id": f"{self.game_id:04d}",  # ቅርጸቱን 0001, 0002 ማድረጊያ
-                "bet": f"{self.stake} ETB",
-                "derash": f"{self.calculate_derash()} ETB",
-                "called_count": len(self.called_numbers),
-                "call": self.current_call
-            }
-        self.is_running = False
-        return None
+        def is_marked(val):
+            return val == "FREE" or int(val) in live_calls
+
+        # 1. አግድም (Rows)
+        for row in matrix:
+            if all(is_marked(c) for c in row): return True
+        # 2. ወደታች (Columns)
+        for col in range(5):
+            if all(is_marked(matrix[row][col]) for row in range(5)): return True
+        # 3. ሰያፍ (Diagonals)
+        if all(is_marked(matrix[i][i]) for i in range(5)): return True
+        if all(is_marked(matrix[i][4-i]) for i in range(5)): return True
+        
+        return False
+
+    def check_all_winners(self):
+        # ሁሉንም ተጫዋቾች አውቶማቲክ መፈተሽ
+        winners = []
+        for tg_id, cells in self.active_player_cards.items():
+            if self.check_matrix_win(cells):
+                winners.append(tg_id)
+        return winners
 
 bingo_game = BingoGame()
 
-# የዌብሶኬት ግንኙነት መቆጣጠሪያ
 class ConnectionManager:
     def init(self):
         self.active_connections: list[WebSocket] = []
@@ -83,59 +85,70 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-# የቢንጎ ቁጥር መጥሪያ ሉፕ (በየ 3 ሰከንዱ ቁጥር የሚያወጣ)
+# የጨዋታው የቀጥታ ሉፕ
 async def bingo_game_loop():
     while True:
+        # ለተጫዋቾች መመዝገቢያ 49 ሰከንድ መስጠት (እዚህ ጋር ሰዓቱ ሲያልቅ ባክኤንዱ መቁጠር ይጀምራል)
         bingo_game.reset_game()
-        print(f"አዲስ ጨዋታ ተጀመረ! Game ID: {bingo_game.game_id:04d}")
+        print("የመመዝገቢያ ሰዓት ተጀምሯል...")
+        await asyncio.sleep(49) # የፊት ክፍሉ ሰዓት እስኪያልቅ መጠበቅ
+        
+        bingo_game.players_count = len(bingo_game.active_player_cards)
+        if bingo_game.players_count == 0:
+            bingo_game.players_count = 3 # ማሳያ ተጫዋች (ለፈተና እንዲሆን)
+            
+        print(f"ጨዋታው በይፋ ተጀመረ! Game ID: {bingo_game.game_id:04d}")
         
         while bingo_game.is_running and bingo_game.all_numbers:
-            data = bingo_game.draw_number()
-            if data:
+            if not bingo_game.all_numbers: break
+            
+            num = bingo_game.all_numbers.pop(0)
+            # ፊደል መለየት
+            if 1 <= num <= 15: letter = "B"
+            elif 16 <= num <= 30: letter = "I"
+            elif 31 <= num <= 45: letter = "N"
+            elif 46 <= num <= 60: letter = "G"
+            elif 61 <= num <= 75: letter = "O"
+            
+            bingo_game.current_call = f"{letter}-{num}"
+            bingo_game.called_numbers.append({"number": num, "letter": letter})
+            # አውቶማቲክ አሸናፊዎችን መፈተሽ (Auto Win Checker)
+            winners = bingo_game.check_all_winners()
+            
+            if winners:
+                bingo_game.is_running = False
                 await manager.broadcast({
-                    "type": "LIVE_DRAW",
-                    "game_id": data["game_id"],
-                    "bet": data["bet"],
-                    "derash": data["derash"],
-                    "called_count": data["called_count"],
-                    "current_call": data["call"],
-                    "history": bingo_game.called_numbers
+                    "type": "WINNER_FOUND",
+                    "game_id": f"{bingo_game.game_id:04d}",
+                    "current_call": f"ቢንጎ ተገኝቷል!",
+                    "winners": winners,
+                    "message": f"የጨዋታው አሸናፊ ID: {winners[0]} ሆኗል! 🎉"
                 })
+                break
+                
+            await manager.broadcast({
+                "type": "LIVE_DRAW",
+                "game_id": f"{bingo_game.game_id:04d}",
+                "bet": f"{bingo_game.stake} ETB",
+                "derash": f"{bingo_game.calculate_derash()} ETB",
+                "called_count": len(bingo_game.called_numbers),
+                "current_call": bingo_game.current_call,
+                "history": bingo_game.called_numbers
+            })
             await asyncio.sleep(3)
             
-        await manager.broadcast({"type": "GAME_OVER"})
-        await asyncio.sleep(10)
+        if bingo_game.is_running: # ቁጥሮቹ ካለቁ
+            await manager.broadcast({"type": "GAME_OVER", "message": "ጨዋታው ያለ አሸናፊ ተጠናቋል!"})
+        await asyncio.sleep(10) # ለቀጣይ ጨዋታ እረፍት
 
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(bingo_game_loop())
 
-# ----------------- አዲስ የተጨመረ፡ የተጠቃሚ ዳታ ማገናኛ API -----------------
-@app.get("/api/user/{tg_id}")
-async def get_user_data(tg_id: int):
-    # ከተጫዋቹ ID ጋር ዳታቤዙን በማገናኘት የቦነስ እና ዋሌት መረጃዎችን ማንበብ
-    conn = sqlite3.connect("bingo_game.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT main_wallet, play_wallet FROM users WHERE tg_id = ?", (tg_id,))
-    user_data = cursor.fetchone()
-    conn.close()
-    
-    if user_data:
-        return {
-            "success": True,
-            "main_wallet": user_data[0],
-            "play_wallet": user_data[1]
-        }
-    return {"success": False, "main_wallet": 0, "play_wallet": 0}
-
-@app.websocket("/ws/game")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True: await websocket.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-
-if name == "main":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# ተጫዋቹ ሰዓቱ ሲያልቅ ካርቴላውን የሚመዘግብበት API
+@app.post("/api/game/register-card")
+async def register_player_card(data: dict):
+    tg_id = data.get("tg_id")
+    cells = data.get("matrix_cells")
+    bingo_game.active_player_cards[tg_id] = cells
+    return {"success": True}
