@@ -8,73 +8,12 @@ if (grid) {
         div.onclick = function() {
             document.querySelectorAll('.cartela').forEach(c => c.classList.remove('selected'));
             div.classList.add('selected');
-            generateBingoCard5x5(i); // ካርቴላ ሲመረጥ 5x5 ማትሪክስ ይሰራራል
         };
         grid.appendChild(div);
     }
 }
 
-// --- 2. የ 5x5 የቢንጎ ማትሪክስ ማመንጫ ሎጂክ ---
-function generateBingoCard5x5(cartelaNumber) {
-    const previewContainer = document.getElementById('preview-5x5');
-    if (!previewContainer) return;
-    
-    previewContainer.innerHTML = ''; // የነበረውን ማጽዳት
-    
-    // ለቢንጎ አምዶች ትክክለኛ የቁጥር ክልል ማዘጋጀት
-    const ranges = {
-        B:, I:, N:, G:, O: [61, 75]
-    };
-    
-    // በካርቴላው ቁጥር ላይ ተመስርቶ ሁል ጊዜ አንድ አይነት ቁጥር እንዲያመነጭ ዘር (Seed) መጠቀም ይቻላል።
-    // ለጊዜው ለእያንዳንዱ አምድ 5 ራንደም ልዩ ቁጥሮችን እናውጣ
-    let cardData = { B: [], I: [], N: [], G: [], O: [] };
-    
-    for (let key in ranges) {
-        let min = ranges[key][0];
-        let max = ranges[key][1];
-        let pool = [];
-        for (let n = min; n <= max; n++) pool.push(n);
-        
-        // ማደባለቅ
-        pool.sort(() => 0.5 - Math.random());
-        cardData[key] = pool.slice(0, 5); // 5 ቁጥሮችን መውሰድ
-    }
-    
-    // ማትሪክሱን በሰንጠረዥ መልክ መደርደር (በአግድም 5x5 መስራት)
-    const keys = ['B', 'I', 'N', 'G', 'O'];
-    for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-            let cell = document.createElement('div');
-            cell.className = 'bingo-cell';
-            
-            // መካከለኛው ክፍል (Row 2, Col 2) FREE መሆን አለበት
-            if (row === 2 && col === 2) {
-                cell.innerText = "FREE";
-                cell.classList.add('free');
-            } else {
-                let currentLetter = keys[col];
-                cell.innerText = cardData[currentLetter][row];
-            }
-            previewContainer.appendChild(cell);
-        }
-    }
-}
-
-// --- 3. የናቪጌሽን ታብ መቀያየሪያ ሎጂክ ---
-function switchTab(routeId, btnElement) {
-    // ሁሉንም ገጾች መደበቅ
-    document.querySelectorAll('.route-content').forEach(r => r.classList.add('hidden'));
-    // የተመረጠውን ገጽ ማሳየት
-    document.getElementById(routeId).classList.remove('hidden');
-    
-    // የሁሉም በተኖች አክቲቭ ከለር ማጥፋት
-    document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
-    // የተጫነውን በተን ማድመቅ
-    btnElement.classList.add('active');
-}
-
-// --- 4. የቢንጎ ቦርድ ቁጥሮች ዝርዝር ማውጫ (1-75) ---
+// --- 2. የቢንጎ ቦርድ ቁጥሮች ዝርዝር ማውጫ (1-75) ---
 function createBingoBoard() {
     for(let i=1; i<=15; i++) { document.getElementById('list-B').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
     for(let i=16; i<=30; i++) { document.getElementById('list-I').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
@@ -84,10 +23,10 @@ function createBingoBoard() {
 }
 createBingoBoard();
 
-// --- 5. ለትንሹ ስክሪን የዘፈቀደ ቀለማት ---
+// --- 3. ለትንሹ ስክሪን የዘፈቀደ ቀለማት ---
 const ballColors = ["#ff4757", "#2ed573", "#1e90ff", "#ffa502", "#9b59b6", "#00d2d3", "#ff6b81"];
 
-// --- 6. የካውንትዳውን ሰዓት ቆጣሪ ሎጂክ ---
+// --- 4. የካውንትዳውን ሰዓት ቆጣሪ ሎጂክ ---
 let timer = 49;
 const countdownElement = document.getElementById('countdown');
 
@@ -97,15 +36,15 @@ if (countdownElement) {
         countdownElement.innerText = timer;
         if (timer <= 0) {
             clearInterval(clock);
-            // ሰዓቱ 0 ሲል ሙሉውን የመጀመሪያ ገጽ ደብቆ የላይቭ ጨዋታውን ገጽ ያበራል
-            document.getElementById('main-app-container').classList.add('hidden');
+            document.getElementById('selection-page').classList.add('hidden');
             document.getElementById('live-game-page').classList.remove('hidden');
             
-            connectToBingoWebSocket();
+            connectToBingoWebSocket(); // ሰዓቱ ሲያልቅ ከባክኤንድ ጋር ይገናኛል
         }
     }, 1000);
 }
- // --- 7. የዌብሶኬት ግንኙነት ---
+
+// --- 5. የዌብሶኬት ግንኙነት ---
 function connectToBingoWebSocket() {
     const ws = new WebSocket("ws://localhost:8000/ws/game");
     
