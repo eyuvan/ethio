@@ -1,4 +1,4 @@
- የካርቴላ መምረጫ አወቃቀር (1-600) ---
+// --- 1. የካርቴላ መምረጫ አወቃቀር (1-600) ---
 const grid = document.getElementById('grid-container');
 if (grid) {
     for (let i = 1; i <= 600; i++) {
@@ -21,7 +21,7 @@ function generateBingoCard5x5(cartelaNumber) {
     
     previewContainer.innerHTML = ''; 
     
-    // የቢንጎ አምዶች ትክክለኛ የቁጥር ክልሎች (የሰዋስው ስህተቱ እዚህ ጋር ተስተካክሏል)
+    // የቢንጎ አምዶች ትክክለኛ የቁጥር ክልሎች (አሁን ሙሉ በሙሉ ተሞልተዋል)
     const ranges = {
         B:,
         I:,

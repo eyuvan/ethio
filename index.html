@@ -7,61 +7,30 @@
     <style>
         body { font-family: sans-serif; background-color: #121212; color: white; margin: 0; padding: 0; text-align: center; padding-bottom: 70px; }
         .hidden { display: none !important; }
-        
-        /* 1ኛው ገጽ፡ የመምረጫ ገጽ ስታይል */
         .top-bar { display: flex; justify-content: space-around; background: #222; padding: 10px; font-size: 14px; }
         .timer { color: #ff4757; font-weight: bold; }
-        
-        /* 2ኛ ማሻሻያ፡ የ "ካርቴላ ይምረጡ" ጽሑፍ መጠን እንዲቀንስ */
         .selection-heading { font-size: 16px; margin: 10px 0; color: #aaa; }
-        
-        /* 1ኛ ማሻሻያ፡ የካርቴላ ሳጥኖች መረብ መጠን እንዲያንስ */
-        .cartela-grid { 
-            display: grid; 
-            grid-template-columns: repeat(6, 1fr); 
-            gap: 4px; 
-            height: 180px; 
-            overflow-y: scroll; 
-            padding: 8px; 
-            background: #1a1a1a; 
-        }
-        
-        /* 1ኛ ማሻሻያ፡ የካርቴላ ነጠላ ሳጥኖች እና ቁጥሮች መጠን እንዲያንስ */
-        .cartela { 
-            background: #333; 
-            padding: 6px 0; 
-            border-radius: 3px; 
-            cursor: pointer; 
-            font-size: 12px; 
-        }
+        .cartela-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; height: 180px; overflow-y: scroll; padding: 8px; background: #1a1a1a; }
+        .cartela { background: #333; padding: 6px 0; border-radius: 3px; cursor: pointer; font-size: 12px; }
         .cartela.selected { background: #2ed573; color: black; font-weight: bold; }
-        
-        /* የ 5x5 ካርቴላ ማሳያ ስታይል */
         .card-preview-section { margin: 15px 0; padding: 5px; }
         .preview-heading { font-size: 15px; margin: 5px 0; color: #aaa; }
         .bingo-card-5x5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-width: 280px; margin: 5px auto; background: #222; padding: 10px; border-radius: 8px; }
         .bingo-cell { background: #ffa502; color: black; font-weight: bold; padding: 10px 0; text-align: center; border-radius: 4px; font-size: 15px; }
         .bingo-cell.free { background: #ff4757; color: white; }
-
-        /* ናቪጌሽን ባር */
         .nav-bar { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; height: 55px; }
         .nav-button { flex: 1; background: none; border: none; color: #aaa; font-size: 13px; cursor: pointer; font-weight: bold; }
         .nav-button.active { color: #2ed573; }
         .route-content { padding: 10px 20px; }
-
-        /* 2ኛው ገጽ፡ የቢንጎ መጫወቻ የቀጥታ ገጽ ስታይል */
         .live-game-page { padding: 15px; }
         .live-top-bar { display: flex; justify-content: space-between; background: #2ed573; color: black; padding: 12px; font-weight: bold; border-radius: 8px; font-size: 14px; margin-bottom: 15px; }
-        
         .live-screen-container { margin: 20px 0; }
         .small-live-screen { width: 110px; height: 110px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px rgba(255,255,255,0.2); transition: background 0.3s ease; }
-        
         .bingo-board { display: flex; justify-content: space-around; background: #1a1a1a; padding: 10px; border-radius: 8px; }
         .column { width: 18%; }
         .column h3 { margin: 5px 0; font-size: 20px; color: #ffa502; border-bottom: 2px solid #ffa502; }
         .column div { display: flex; flex-direction: column; gap: 4px; }
         .column div span { background: #2d3436; padding: 6px; font-size: 14px; border-radius: 3px; color: #b2bec3; }
-        
         .column div span.called-highlight { background: #2ed573; color: black; font-weight: bold; transform: scale(1.05); box-shadow: 0 0 8px #2ed573; }
     </style>
 </head>
@@ -70,11 +39,12 @@
     <div id="main-app-container">
         <div class="top-bar">
             <div>Stake: <span id="top-stake">10 ETB</span></div>
-            <div>Main Wallet: <span id="top-main-wallet">150</span></div>
-            <div>Play Wallet: <span id="top-play-wallet">50</span></div>
+            <div>Main Wallet: <span id="top-main-wallet">0</span></div> <!-- 0 ሆኗል -->
+            <div>Play Wallet: <span id="top-play-wallet">0</span></div>
             <div class="timer">Timer: <span id="countdown">49</span>s</div>
         </div>
-		<div id="content-area">
+
+        <div id="content-area">
             <div id="route-game" class="route-content">
                 <h2 class="selection-heading">ካርቴላ ይምረጡ (1 - 600)</h2>
                 <div class="cartela-grid" id="grid-container"></div>
@@ -86,11 +56,10 @@
                     </div>
                 </div>
             </div>
-
-            <div id="route-wallet" class="route-content hidden">
+			<div id="route-wallet" class="route-content hidden">
                 <h2>የኪስ ቦርሳ (Wallet)</h2>
-                <p>Main Wallet: 150 ETB</p>
-                <p>Play Wallet: 50 ETB</p>
+                <p>Main Wallet: <span id="wallet-main-val">0</span> ETB</p>
+                <p>Play Wallet: <span id="wallet-play-val">0</span> ETB</p>
             </div>
 
             <div id="route-history" class="route-content hidden">
@@ -100,10 +69,10 @@
 
             <div id="route-profile" class="route-content hidden">
                 <h2>የግል መገለጫ (Profile)</h2>
-                <p>Telegram ID: 12345678</p>
+                <p>Telegram ID: <span id="prof-tg-id">12345678</span></p>
                 <p>Telephone: 0928361886</p>
-                <p>Main Wallet: 150 ETB</p>
-                <p>Play Wallet: 50 ETB</p>
+                <p>Main Wallet: <span id="prof-main-val">0</span> ETB</p>
+                <p>Play Wallet: <span id="prof-play-val">0</span> ETB</p>
             </div>
         </div>
 
