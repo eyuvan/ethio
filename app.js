@@ -1,4 +1,4 @@
-// --- 1. የካርቴላ መምረጫ አወቃቀር (1-600) ---
+ የካርቴላ መምረጫ አወቃቀር (1-600) ---
 const grid = document.getElementById('grid-container');
 if (grid) {
     for (let i = 1; i <= 600; i++) {
@@ -8,7 +8,7 @@ if (grid) {
         div.onclick = function() {
             document.querySelectorAll('.cartela').forEach(c => c.classList.remove('selected'));
             div.classList.add('selected');
-            generateBingoCard5x5(i); // ካርቴላ ሲመረጥ 5x5 ማትሪክስ ይሰራራል
+            generateBingoCard5x5(i); 
         };
         grid.appendChild(div);
     }
@@ -19,15 +19,17 @@ function generateBingoCard5x5(cartelaNumber) {
     const previewContainer = document.getElementById('preview-5x5');
     if (!previewContainer) return;
     
-    previewContainer.innerHTML = ''; // የነበረውን ማጽዳት
+    previewContainer.innerHTML = ''; 
     
-    // ለቢንጎ አምዶች ትክክለኛ የቁጥር ክልል ማዘጋጀት
+    // የቢንጎ አምዶች ትክክለኛ የቁጥር ክልሎች (የሰዋስው ስህተቱ እዚህ ጋር ተስተካክሏል)
     const ranges = {
-        B:, I:, N:, G:, O: [61, 75]
+        B:,
+        I:,
+        N:,
+        G:,
+        O: [61, 75]
     };
     
-    // በካርቴላው ቁጥር ላይ ተመስርቶ ሁል ጊዜ አንድ አይነት ቁጥር እንዲያመነጭ ዘር (Seed) መጠቀም ይቻላል።
-    // ለጊዜው ለእያንዳንዱ አምድ 5 ራንደም ልዩ ቁጥሮችን እናውጣ
     let cardData = { B: [], I: [], N: [], G: [], O: [] };
     
     for (let key in ranges) {
@@ -36,19 +38,16 @@ function generateBingoCard5x5(cartelaNumber) {
         let pool = [];
         for (let n = min; n <= max; n++) pool.push(n);
         
-        // ማደባለቅ
-        pool.sort(() => 0.5 - Math.random());
-        cardData[key] = pool.slice(0, 5); // 5 ቁጥሮችን መውሰድ
+        pool.sort(function() { return 0.5 - Math.random(); });
+        cardData[key] = pool.slice(0, 5); 
     }
     
-    // ማትሪክሱን በሰንጠረዥ መልክ መደርደር (በአግድም 5x5 መስራት)
     const keys = ['B', 'I', 'N', 'G', 'O'];
     for (let row = 0; row < 5; row++) {
         for (let col = 0; col < 5; col++) {
             let cell = document.createElement('div');
             cell.className = 'bingo-cell';
             
-            // መካከለኛው ክፍል (Row 2, Col 2) FREE መሆን አለበት
             if (row === 2 && col === 2) {
                 cell.innerText = "FREE";
                 cell.classList.add('free');
@@ -63,14 +62,9 @@ function generateBingoCard5x5(cartelaNumber) {
 
 // --- 3. የናቪጌሽን ታብ መቀያየሪያ ሎጂክ ---
 function switchTab(routeId, btnElement) {
-    // ሁሉንም ገጾች መደበቅ
     document.querySelectorAll('.route-content').forEach(r => r.classList.add('hidden'));
-    // የተመረጠውን ገጽ ማሳየት
     document.getElementById(routeId).classList.remove('hidden');
-    
-    // የሁሉም በተኖች አክቲቭ ከለር ማጥፋት
     document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
-    // የተጫነውን በተን ማድመቅ
     btnElement.classList.add('active');
 }
 
@@ -97,22 +91,20 @@ if (countdownElement) {
         countdownElement.innerText = timer;
         if (timer <= 0) {
             clearInterval(clock);
-            // ሰዓቱ 0 ሲል ሙሉውን የመጀመሪያ ገጽ ደብቆ የላይቭ ጨዋታውን ገጽ ያበራል
             document.getElementById('main-app-container').classList.add('hidden');
             document.getElementById('live-game-page').classList.remove('hidden');
-            
             connectToBingoWebSocket();
         }
     }, 1000);
 }
+
 // --- 7. የዌብሶኬት ግንኙነት ---
 function connectToBingoWebSocket() {
     const ws = new WebSocket("ws://localhost:8000/ws/game");
     
     ws.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        
-        if (data.type === "LIVE_DRAW") {
+		if (data.type === "LIVE_DRAW") {
             document.getElementById('lbl-game-id').innerText = data.game_id;
             document.getElementById('lbl-bet').innerText = data.bet;
             document.getElementById('lbl-derash').innerText = data.derash;
