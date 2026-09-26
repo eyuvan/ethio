@@ -5,16 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edil Bingo</title>
     <style>
-        body { font-family: sans-serif; background-color: #121212; color: white; margin: 0; padding: 0; text-align: center; }
+        body { font-family: sans-serif; background-color: #121212; color: white; margin: 0; padding: 0; text-align: center; padding-bottom: 70px; }
         .hidden { display: none !important; }
         
         /* 1ኛው ገጽ፡ የመምረጫ ገጽ */
         .top-bar { display: flex; justify-content: space-around; background: #222; padding: 10px; font-size: 14px; }
         .timer { color: #ff4757; font-weight: bold; }
-        .cartela-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; height: 250px; overflow-y: scroll; padding: 10px; background: #1a1a1a; }
+        .cartela-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; height: 200px; overflow-y: scroll; padding: 10px; background: #1a1a1a; }
         .cartela { background: #333; padding: 12px; border-radius: 4px; cursor: pointer; }
         .cartela.selected { background: #2ed573; color: black; font-weight: bold; }
         
+        /* የ 5x5 ካርቴላ ማሳያ ስታይል */
+        .card-preview-section { margin: 20px 0; padding: 10px; }
+        .bingo-card-5x5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-width: 300px; margin: 10px auto; background: #222; padding: 10px; border-radius: 8px; }
+        .bingo-cell { background: #ffa502; color: black; font-weight: bold; padding: 12px 0; text-align: center; border-radius: 4px; font-size: 16px; }
+        .bingo-cell.free { background: #ff4757; color: white; }
+
+        /* ናቪጌሽን ባር */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; height: 60px; }
+        .nav-button { flex: 1; background: none; border: none; color: #aaa; font-size: 14px; cursor: pointer; font-weight: bold; }
+        .nav-button.active { color: #2ed573; }
+        .route-content { padding: 20px; }
+
         /* 2ኛው ገጽ፡ የቢንጎ መጫወቻ የቀጥታ ገጽ */
         .live-game-page { padding: 15px; }
         .live-top-bar { display: flex; justify-content: space-between; background: #2ed573; color: black; padding: 12px; font-weight: bold; border-radius: 8px; font-size: 14px; margin-bottom: 15px; }
@@ -33,19 +45,63 @@
 </head>
 <body>
 
-    <!-- ================= 1ኛው ገጽ፡ የመምረጫ ስክሪን ================= -->
-    <div id="selection-page">
+    <!-- ================= 1ኛው ገጽ፡ ዋናው መተግበሪያ ከነ ናቪጌሽኑ ================= -->
+    <div id="main-app-container">
         <div class="top-bar">
-            <div>Stake: <span>10 ETB</span></div>
-            <div>Main Wallet: <span>150</span></div>
-            <div>Play Wallet: <span>50</span></div>
+            <div>Stake: <span id="top-stake">10 ETB</span></div>
+            <div>Main Wallet: <span id="top-main-wallet">150</span></div>
+            <div>Play Wallet: <span id="top-play-wallet">50</span></div>
             <div class="timer">Timer: <span id="countdown">49</span>s</div>
         </div>
-        <h2>ካርቴላ ይምረጡ (1 - 600)</h2>
-        <div class="cartela-grid" id="grid-container"></div>
+
+        <!-- የናቪጌሽን ገጾች ይዘት (Routes) -->
+        <div id="content-area">
+            <!-- Game Route -->
+            <div id="route-game" class="route-content">
+                <h2>ካርቴላ ይምረጡ (1 - 600)</h2>
+                <div class="cartela-grid" id="grid-container"></div>
+				<div class="card-preview-section">
+                    <h3>የእርስዎ 5x5 ካርቴላ</h3>
+                    <div class="bingo-card-5x5" id="preview-5x5">
+                        <!-- ካርቴላ ሲመረጥ በJS እዚህ ይሞላል -->
+                        <div style="grid-column: span 5; color: #888; padding: 20px;">እባክዎ መጀመሪያ ካርቴላ ይምረጡ</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet Route -->
+            <div id="route-wallet" class="route-content hidden">
+                <h2>የኪስ ቦርሳ (Wallet)</h2>
+                <p>Main Wallet: 150 ETB</p>
+                <p>Play Wallet: 50 ETB</p>
+            </div>
+
+            <!-- History Route -->
+            <div id="route-history" class="route-content hidden">
+                <h2>የጨዋታዎች ታሪክ (History)</h2>
+                <p>እስካሁን የተጫወቱት ጨዋታ የለም።</p>
+            </div>
+
+            <!-- Profile Route -->
+            <div id="route-profile" class="route-content hidden">
+                <h2>የግል መገለጫ (Profile)</h2>
+                <p>Telegram ID: 12345678</p>
+                <p>Telephone: 0928361886</p>
+                <p>Main Wallet: 150 ETB</p>
+                <p>Play Wallet: 50 ETB</p>
+            </div>
+        </div>
+
+        <!-- የታችኛው ናቪጌሽን ባር -->
+        <nav class="nav-bar">
+            <button class="nav-button active" onclick="switchTab('route-game', this)">Game</button>
+            <button class="nav-button" onclick="switchTab('route-wallet', this)">Wallet</button>
+            <button class="nav-button" onclick="switchTab('route-history', this)">History</button>
+            <button class="nav-button" onclick="switchTab('route-profile', this)">Profile</button>
+        </nav>
     </div>
 
-    <!-- ================= 2ኛው ገጽ፡ የቀጥታ ጨዋታ ስክሪን ================= -->
+    <!-- ================= 2ኛው ገጽ፡ የቀጥታ ጨዋታ ስክሪን (ሰዓት ሲያልቅ የሚበራ) ================= -->
     <div id="live-game-page" class="live-game-page hidden">
         <div class="live-top-bar">
             <div>Game ID: <span id="lbl-game-id">0000</span></div>
@@ -67,7 +123,6 @@
         </div>
     </div>
 
-    <!-- የጃቫስክሪፕት ፋይሉን እዚህ ጋር እናገናኛለን -->
     <script src="app.js"></script>
 </body>
 </html>
