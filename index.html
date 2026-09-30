@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethio Bingo</title>
-    <!-- የቴሌግራም ስክሪፕት (ባይጫን እንኳ ጨዋታው እንዳይቆም በጃቫስክሪፕቱ ተከላክለናል) -->
-    <script src="https://telegram.org"></script>
+    <title>Lucky Bingo</title>
+    <!-- የቴሌግራም ስክሪፕት ባይጫን እንኳ ኮዱ እንዳይቋረጥ ተደርጓል -->
+    <script src="https://telegram.org" defer></script>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -15,6 +15,7 @@
             color: #2c3e50;
             padding-bottom: 90px;
             box-sizing: border-box;
+            user-select: none;
         }
 
         /* Top Dashboard */
@@ -78,7 +79,6 @@
             font-size: 14px;
         }
 
-        /* የተመረጡ ካርቴላዎች አረንጓዴ ቀለም */
         .card-box.selected {
             background-color: #2ecc71 !important;
             color: white !important;
@@ -230,15 +230,15 @@
 </head>
 <body>
 
-    <!-- Top Dashboard -->
+    <!-- Top Dashboard (Main Wallet: 0, Play Wallet: 10) -->
     <div id="top-dashboard">
         <div>Stake: <span id="play-stake">10 ETB</span></div>
-        <div>Main: <span id="main-wallet">500 ETB</span></div>
-        <div>Play: <span id="play-wallet">50 ETB</span></div>
+        <div>Main: <span id="main-wallet">0 ETB</span></div>
+        <div>Play: <span id="play-wallet">10 ETB</span></div>
         <div id="timer-box">Timer: <span id="timer">49</span>s</div>
     </div>
 
-    <!-- Main Screens -->
+    <!-- Main Content -->
     <main>
         <!-- 🎯 GAME TAB -->
         <div id="game-tab">
@@ -268,26 +268,26 @@
         <!-- 💰 WALLET TAB -->
         <div id="wallet-tab" class="tab-content hidden">
             <h2>የኪስ ቦርሳ (Wallet)</h2>
-            <p><b>Main Wallet:</b> 500 ETB</p>
-            <p><b>Play Wallet:</b> 50 ETB</p>
+            <p><b>Main Wallet:</b> 0 ETB</p>
+            <p><b>Play Wallet:</b> 10 ETB</p>
         </div>
-
-        <!-- 📜 HISTORY TAB -->
+		<!-- 📜 HISTORY TAB -->
         <div id="history-tab" class="tab-content hidden">
             <h2>የተጫወቱት ታሪክ (History)</h2>
             <p>ምንም የታሪክ መዝገብ የለም።</p>
         </div>
-		<!-- 👤 PROFILE TAB -->
+
+        <!-- 👤 PROFILE TAB -->
         <div id="profile-tab" class="tab-content hidden">
             <h2>የእኔ መገለጫ (Profile)</h2>
             <p><b>Telegram ID:</b> 74839201</p>
             <p><b>Telephone:</b> 0928361886</p>
-            <p><b>Main Wallet:</b> 500 ETB</p>
-            <p><b>Play Wallet:</b> 50 ETB</p>
+            <p><b>Main Wallet:</b> 0 ETB</p>
+            <p><b>Play Wallet:</b> 10 ETB</p>
         </div>
     </main>
 
-    <!-- Navigation Bar -->
+    <!-- Bottom Navigation Bar -->
     <nav class="nav-bar">
         <button id="btn-game" class="active-tab" onclick="switchTab('game')">🎮 Game</button>
         <button id="btn-wallet" onclick="switchTab('wallet')">💰 Wallet</button>
@@ -301,9 +301,9 @@
         let gameIdCounter = 1;
         let timerInterval;
 
-        // የቴሌግራም ስክሪፕት ስህተት እንዳይፈጥር ራሱን ችሎ ገጹ ሲከፈት ወዲያውኑ የሚጀምር አሰራር
+        // የቴሌግራም ስክሪፕት መዘግየት ቢኖር እንኳ ገጹ ራሱን ችሎ ያለምንም ስህተት ወዲያውኑ የሚጀምርበት ተግባር
         function initializeApp() {
-            // 1. 1-600 ካርቴላዎችን መፍጠር
+            // 1. 1-600 ካርቴላዎችን በግሪድ መፍጠር
             const container = document.getElementById('cards-container');
             if (container) {
                 container.innerHTML = '';
@@ -315,17 +315,15 @@
                     container.appendChild(card);
                 }
             }
-
-            // 2. የቢንጎ ሰሌዳውን ማዘጋጀት
             setupBingoBoard();
-
-            // 3. ታይመሩን ማስጀመር
             startCountdown();
         }
 
-        // ገጹ እንደተጫነ ወዲያውኑ ስራ እንዲጀምር ማድረግ
+        // ገጹ እንደተጫነ ወዲያውኑ ማስጀመር
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
             initializeApp();
         }
+
+        // ቴሌግራም Mini Appን ማስተካከያ (ስህተት እንዳይፈጥር በ try-catch ተከልሏል)
