@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethio Bingo</title>
+    <title>Edil Bingo</title>
+    <!-- የቴሌግራም ስክሪፕት -->
     <script src="https://telegram.org"></script>
     <style>
         body {
@@ -12,8 +13,7 @@
             padding: 0;
             background-color: #f1f2f6;
             color: #2c3e50;
-            padding-bottom: 70px;
-            user-select: none;
+            padding-bottom: 80px;
         }
 
         /* Top Dashboard */
@@ -52,18 +52,18 @@
             text-align: center;
         }
 
-        /* 1-600 የካርቴላ መደርደሪያ ግሪድ */
+        /* 1-600 የካርቴላ መደርደሪያ (የተረጋገጠ አሰራር) */
         #cards-container {
             display: grid;
-            grid-template-columns: repeat(5, 1fr); /* 5 አምድ በየመስመሩ */
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
-            max-height: 320px;
-            overflow-y: auto;
+            height: 300px;
+            overflow-y: scroll;
             background: white;
             padding: 12px;
             border-radius: 8px;
             border: 1px solid #dcdde1;
-            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
         }
 
         .card-box {
@@ -75,7 +75,6 @@
             cursor: pointer;
             border-radius: 6px;
             font-size: 14px;
-            transition: background 0.2s;
         }
 
         /* የተመረጡ ካርቴላዎች አረንጓዴ ቀለም */
@@ -99,7 +98,7 @@
             cursor: pointer;
         }
 
-        /* የቢንጎ መጫወቻ ስክሪን */
+        /* የቢንጎ ጨዋታ ስክሪን */
         #game-id-header {
             font-size: 16px;
             font-weight: bold;
@@ -116,10 +115,9 @@
             font-weight: bold;
             border-radius: 8px;
             margin-bottom: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        /* B I N G O የቁጥሮች ማሳያ ቦርድ */
+        /* B I N G O ቦርድ */
         .bingo-board {
             display: flex;
             justify-content: space-between;
@@ -127,7 +125,7 @@
             padding: 8px;
             border-radius: 8px;
             border: 1px solid #dcdde1;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .column {
@@ -142,38 +140,27 @@
             margin: 0 0 6px 0;
             padding: 6px 0;
             border-radius: 4px;
-            font-size: 14px;
         }
 
         .num-list {
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 4px;
-            max-height: 250px;
-            overflow-y: auto;
+            height: 200px;
+            overflow-y: scroll;
         }
-.num-list span {
+
+        .num-list span {
             background-color: #f1f2f6;
             border: 1px solid #e4e7eb;
             padding: 4px 0;
             font-size: 12px;
             font-weight: bold;
             border-radius: 3px;
-            display: block;
         }
-
-        /* የተጠሩ ቁጥሮች ብርቱካን ቀለም */
-        .num-list span.called-active {
+		.num-list span.called-active {
             background-color: #e67e22 !important;
             color: white !important;
-            border-color: #d35400;
-        }
-
-        /* የተጫዋቹ የ 5x5 ቢንጎ ካርድ ማትሪክስ ዲዛይን */
-        .user-cards-title {
-            font-size: 15px;
-            font-weight: bold;
-            margin: 15px 0 5px 0;
         }
 
         .bingo-matrix {
@@ -199,9 +186,6 @@
             background-color: #e74c3c;
             color: white;
             font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         /* የታችኛው ናቪጌሽን ባር */
@@ -221,7 +205,7 @@
             flex: 1;
             background: none;
             border: none;
-            padding: 15px 0;
+            padding: 18px 0;
             font-size: 13px;
             font-weight: bold;
             color: #7f8c8d;
@@ -229,7 +213,7 @@
         }
 
         .nav-bar button.active-tab {
-            color: #007aff;
+            color: #007aff !important;
             background-color: #f8f9fa;
         }
         
@@ -238,7 +222,6 @@
             padding: 15px;
             border-radius: 8px;
             border: 1px solid #dcdde1;
-            margin-top: 10px;
         }
     </style>
 </head>
@@ -246,32 +229,25 @@
 
     <!-- 1. Top Dashboard -->
     <div id="top-dashboard">
-        <div>Stake: <span>10 ETB</span></div>
-        <div>Main: <span>500 ETB</span></div>
-        <div>Play: <span>50 ETB</span></div>
+        <div>Stake: <span id="play-stake">10 ETB</span></div>
+        <div>Main: <span id="main-wallet">500 ETB</span></div>
+        <div>Play: <span id="play-wallet">50 ETB</span></div>
         <div id="timer-box">Timer: <span id="timer">49</span>s</div>
     </div>
 
-    <!-- Main Content Area -->
+    <!-- Main Content -->
     <main>
         <!-- 🎯 GAME TAB -->
         <div id="game-tab">
-            <!-- ሀ. የካርቴላ መምረጫ ስክሪን -->
             <section id="selection-screen">
                 <h3>ካርቴላ ይምረጡ (ከ 1 - 3 ማርክ ማድረግ ይችላሉ)</h3>
                 <div id="cards-container"></div>
                 <button id="confirm-selection-btn" onclick="forceStartGame()">አረጋግጥና ቀጥል</button>
             </section>
 
-            <!-- ለ. የቢንጎ መጫወቻ ስክሪን -->
             <section id="game-screen" class="hidden">
                 <div id="game-id-header">Game ID: <span id="game-id">0001</span></div>
-                
-                <div id="called-number-screen">
-                    <span id="current-call">ቁጥር በመጠባበቅ ላይ...</span>
-                </div>
-
-                <!-- B-I-N-G-O ሰሌዳ -->
+                <div id="called-number-screen"><span id="current-call">ቁጥር በመጠባበቅ ላይ...</span></div>
                 <div class="bingo-board">
                     <div class="column"><h4>B</h4><div id="col-B" class="num-list"></div></div>
                     <div class="column"><h4>I</h4><div id="col-I" class="num-list"></div></div>
@@ -279,8 +255,7 @@
                     <div class="column"><h4>G</h4><div id="col-G" class="num-list"></div></div>
                     <div class="column"><h4>O</h4><div id="col-O" class="num-list"></div></div>
                 </div>
-				<!-- የተጫዋቹ የ 5x5 ማትሪክስ ካርዶች መገኛ -->
-                <div class="user-cards-title">የእርስዎ የቢንጎ ካርዶች (5x5)፦</div>
+                <div style="font-weight:bold; margin-top:15px;">የእርስዎ የ 5x5 ካርዶች፦</div>
                 <div id="user-matrices-container"></div>
             </section>
         </div>
@@ -288,8 +263,8 @@
         <!-- 💰 WALLET TAB -->
         <div id="wallet-tab" class="tab-content hidden">
             <h2>የኪስ ቦርሳ (Wallet)</h2>
-            <p><b>Main Wallet:</b> 500 ETB</p>
-            <p><b>Play Wallet:</b> 50 ETB</p>
+            <p>Main Wallet: 500 ETB</p>
+            <p>Play Wallet: 50 ETB</p>
         </div>
 
         <!-- 📜 HISTORY TAB -->
@@ -300,15 +275,15 @@
 
         <!-- 👤 PROFILE TAB -->
         <div id="profile-tab" class="tab-content hidden">
-            <h2>የእኔ መገለጫ (Profile)</h2>
-            <p><b>Telegram ID:</b> 74839201</p>
-            <p><b>Telephone:</b> +251912345678</p>
+		<h2>የእኔ መገለጫ (Profile)</h2>
+            <p><b>Telegram ID:</b> <span id="prof-tg-id">74839201</span></p>
+            <p><b>Telephone:</b> 0928361886</p>
             <p><b>Main Wallet:</b> 500 ETB</p>
             <p><b>Play Wallet:</b> 50 ETB</p>
         </div>
     </main>
 
-    <!-- Bottom Navigation Bar -->
+    <!-- Navigation Bar -->
     <nav class="nav-bar">
         <button id="btn-game" class="active-tab" onclick="switchTab('game')">🎮 Game</button>
         <button id="btn-wallet" onclick="switchTab('wallet')">💰 Wallet</button>
@@ -322,12 +297,35 @@
         let gameIdCounter = 1;
         let timerInterval;
 
-        // ገጹ ወዲያውኑ እንደተጫነ 1-600 ካርቴላዎችን በግድ መፍጠር
-        window.addEventListener('DOMContentLoaded', () => {
+        // ገጹ እንደተከፈተ ራሱን ችሎ ስራ እንዲጀምር ማረጋገጫ (Safe Init)
+        window.onload = function() {
+            // የቴሌግራም Mini Appን ማስተካከያ
+            try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.ready();
+                    window.Telegram.WebApp.expand();
+                }
+            } catch(e) { console.log("Telegram init skipped outside Telegram"); }
+
+            // 1. 1-600 ካርቴላዎችን መፍጠር
             const container = document.getElementById('cards-container');
-            container.innerHTML = ''; // ማጽጃ
-            for (let i = 1; i <= 600; i++) {
-                let card = document.createElement('div');
-                card.classList.add('card-box');
-                card.innerText = i;
-                card.onclick = () => selectCard(card, i);
+            if (container) {
+                container.innerHTML = '';
+                for (let i = 1; i <= 600; i++) {
+                    let card = document.createElement('div');
+                    card.classList.add('card-box');
+                    card.innerText = i;
+                    card.onclick = function() { selectCard(card, i); };
+                    container.appendChild(card);
+                }
+            }
+
+            // 2. የቢንጎ ሰሌዳውን ማዘጋጀት
+            setupBingoBoard();
+
+            // 3. ታይመሩን ማስጀመር
+            startCountdown();
+        };
+
+        function selectCard(element, num) {
+            if (selectedCards.includes(num)) {
