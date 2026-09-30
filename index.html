@@ -3,12 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Bingo</title>
-    <link rel="stylesheet" href="static/css/style.css">
+    <title>Ethio Bingo</title>
     <script src="https://telegram.org"></script>
+    <style>
+        /* --- CSS ዲዛይን (እዚህ ተካቷል) --- */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f1f2f6;
+            color: #2c3e50;
+            padding-bottom: 70px;
+        }
+
+        /* Top Dashboard */
+        #top-dashboard {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        #timer-box {
+            background-color: #e74c3c;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        /* ገጾችን የመደበቂያ ሎጂክ (ስክሪኖችን የሚለየው ይህ ነው) */
+        .hidden {
+            display: none !important;
+        }
+
+        main {
+            padding: 12px;
+        }
+
+        /* 1-600 የካርቴላ መደርደሪያ */
+        h3 {
+            margin-top: 5px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        #cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+            gap: 6px;
+            max-height: 380px;
+            overflow-y: auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #dcdde1;
+        }
+
+        .card-box {
+            background-color: #f8f9fa;
+            border: 1px solid #ced6e0;
+            padding: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* ተጫዋቹ ሲመርጥ ቀለሙ ወደ አረንጓዴ ይቀየራል */
+        .card-box.selected {
+            background-color: #2ecc71 !important;
+            color: white !important;
+            border-color: #27ae60;
+        }
+
+        #confirm-selection-btn {
+            display: block;
+            width: 100%;
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        /* የቢንጎ ጨዋታ ስክሪን */
+        #game-id-header {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        #called-number-screen {
+            background-color: #16a085;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 26px;
+            font-weight: bold;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        /* የ B I N G O ሰሌዳ */
+        .bingo-board {
+            display: flex;
+            justify-content: space-between;
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #dcdde1;
+        }
+
+        .column {
+            flex: 1;
+            text-align: center;
+            margin: 0 2px;
+        }
+
+        .column h4 {
+            background-color: #2c3e50;
+            color: white;
+            margin: 0 0 6px 0;
+            padding: 4px 0;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .num-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .num-list span {
+            background-color: #f1f2f6;
+            border: 1px solid #e4e7eb;
+            padding: 3px 0;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 2px;
+        }
+	[9/30/2026 3:11 AM] €¥uvan_unique _boyz1: /* ቁጥሩ ሲጠራ የሚበራው የብርቱካን ቀለም */
+        .num-list span.called-active {
+            background-color: #e67e22 !important;
+            color: white !important;
+            border-color: #d35400;
+        }
+
+        /* የታችኛው ናቪጌሽን ባር */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #ddd;
+            z-index: 1000;
+        }
+
+        .nav-bar button {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 15px 0;
+            font-size: 13px;
+            font-weight: bold;
+            color: #7f8c8d;
+            cursor: pointer;
+        }
+
+        .nav-bar button.active-tab {
+            color: #2980b9;
+            background-color: #f8f9fa;
+        }
+        
+        .tab-content {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dcdde1;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Top Dashboard -->
+
+    <!-- 1. Top Dashboard -->
     <div id="top-dashboard">
         <div>Stake: <span id="play-stake">10 ETB</span></div>
         <div>Main: <span id="main-wallet">500 ETB</span></div>
@@ -17,54 +211,116 @@
     </div>
 
     <!-- Main Screens -->
-    <main id="main-content">
-        <!-- 1. Selection Screen -->
-        <section id="selection-screen">
-            <h3>ካርቴላ ይምረጡ (ከ 1 - 3 ማርክ ማድረግ ይችላሉ)</h3>
-            <div id="cards-container"><!-- JS 1-600 ካርቴላዎችን እዚህ ይፈጥራል --></div>
-            <button id="confirm-selection-btn">ቀጥል</button>
-        </section>
+    <main>
+        <!-- 🎯 GAME TAB -->
+        <div id="game-tab">
+            <!-- ሀ. የካርቴላ መምረጫ ስክሪን -->
+            <section id="selection-screen">
+                <h3>ካርቴላ ይምረጡ (ከ 1 - 3 ማርክ ማድረግ ይችላሉ)</h3>
+                <div id="cards-container"></div>
+                <button id="confirm-selection-btn" onclick="forceStartGame()">አረጋግጥና ቀጥል</button>
+            </section>
 
-        <!-- 2. Active Game Screen (After Timer Ends) -->
-        <section id="game-screen" class="hidden">
-            <div id="game-id-header">Game ID: <span id="game-id">0001</span></div>
-            
-            <!-- Called Number Display -->
-            <div id="called-number-screen">
-                <span id="current-call">የሚጠራው ቁጥር...</span>
-            </div>
+            <!-- ለ. የቢንጎ መጫወቻ ስክሪን (መጀመሪያ የተደበቀ) -->
+            <section id="game-screen" class="hidden">
+                <div id="game-id-header">Game ID: <span id="game-id">0001</span></div>
+                
+                <div id="called-number-screen">
+                    <span id="current-call">ቁጥር በመጠባበቅ ላይ...</span>
+                </div>
 
-            <!-- Bingo Board Columns -->
-            <div class="bingo-board">
-                <div class="column"><h3>B</h3><div id="col-B" class="num-list"></div></div>
-                <div class="column"><h3>I</h3><div id="col-I" class="num-list"></div></div>
-                <div class="column"><h3>N</h3><div id="col-N" class="num-list"></div></div>
-                <div class="column"><h3>G</h3><div id="col-G" class="num-list"></div></div>
-                <div class="column"><h3>O</h3><div id="col-O" class="num-list"></div></div>
-            </div>
+                <div class="bingo-board">
+                    <div class="column"><h4>B</h4><div id="col-B" class="num-list"></div></div>
+                    <div class="column"><h4>I</h4><div id="col-I" class="num-list"></div></div>
+                    <div class="column"><h4>N</h4><div id="col-N" class="num-list"></div></div>
+                    <div class="column"><h4>G</h4><div id="col-G" class="num-list"></div></div>
+                    <div class="column"><h4>O</h4><div id="col-O" class="num-list"></div></div>
+                </div>
+            </section>
+        </div>
 
-            <!-- User's Selected 5x5 Cards -->
-            <div id="user-bingo-cards"></div>
-        </section>
+        <!-- 💰 WALLET TAB (መጀመሪያ የተደበቀ) -->
+        <div id="wallet-tab" class="tab-content hidden">
+            <h2>የኪስ ቦርሳ (Wallet)</h2>
+            <p>Main Wallet: 500 ETB</p>
+            <p>Play Wallet: 50 ETB</p>
+        </div>
 
-        <!-- Other Tabs -->
-        <section id="wallet-screen" class="hidden"><h2>የኪስ ቦርሳ (Wallet)</h2></section>
-        <section id="history-screen" class="hidden"><h2>የተጫወቱት ታሪክ (History)</h2></section>
-        <section id="profile-screen" class="hidden">
+        <!-- 📜 HISTORY TAB (መጀመሪያ የተደበቀ) -->
+        <div id="history-tab" class="tab-content hidden">
+            <h2>የተጫወቱት ታሪክ (History)</h2>
+            <p>ምንም የታሪክ መዝገብ የለም።</p>
+        </div>
+
+        <!-- 👤 PROFILE TAB (መጀመሪያ የተደበቀ) -->
+        <div id="profile-tab" class="tab-content hidden">
             <h2>የእኔ መገለጫ (Profile)</h2>
-            <p>Telegram ID: <span id="prof-tg-id">12345678</span></p>
-            <p>Telephone: <span id="prof-phone">+2519...</span></p>
-        </section>
+            <p><b>Telegram ID:</b> 74839201</p>
+            <p><b>Telephone:</b> +251912345678</p>
+            <p><b>Main Wallet:</b> 500 ETB</p>
+            <p><b>Play Wallet:</b> 50 ETB</p>
+        </div>
     </main>
 
-    <!-- Bottom Navigation Bar -->
+    <!-- የታችኛው ማውጫ (Bottom Navigation Bar) -->
     <nav class="nav-bar">
-        <button onclick="switchTab('game')">🎮 Game</button>
-        <button onclick="switchTab('wallet')">💰 Wallet</button>
-        <button onclick="switchTab('history')">📜 History</button>
-        <button onclick="switchTab('profile')">👤 Profile</button>
+        <button id="btn-game" class="active-tab" onclick="switchTab('game')">🎮 Game</button>
+        <button id="btn-wallet" onclick="switchTab('wallet')">💰 Wallet</button>
+        <button id="btn-history" onclick="switchTab('history')">📜 History</button>
+        <button id="btn-profile" onclick="switchTab('profile')">👤 Profile</button>
     </nav>
+	<!-- --- JAVASCRIPT ሎጂክ (እዚህ ተካቷል) --- -->
+    <script>
+        let selectedCards = [];
+        let countdownValue = 49;
+        let gameIdCounter = 1;
+        let timerInterval;
 
-    <script src="static/js/app.js"></script>
-</body>
-</html>
+        // 1. 1 - 600 ካርቴላዎችን በግሪድ መፍጠር
+        const container = document.getElementById('cards-container');
+        for (let i = 1; i <= 600; i++) {
+            let card = document.createElement('div');
+            card.classList.add('card-box');
+            card.innerText = i;
+            card.onclick = () => selectCard(card, i);
+            container.appendChild(card);
+        }
+
+        function selectCard(element, num) {
+            if (selectedCards.includes(num)) {
+                selectedCards = selectedCards.filter(id => id !== num);
+                element.classList.remove('selected');
+            } else {
+                if (selectedCards.length < 3) {
+                    selectedCards.push(num);
+                    element.classList.add('selected');
+                } else {
+                    alert("ቢበዛ መምረጥ የሚችሉት 3 ካርቴላ ብቻ ነው!");
+                }
+            }
+        }
+
+        // 2. Countdown Timer
+        const timerElement = document.getElementById('timer');
+        timerInterval = setInterval(() => {
+            countdownValue--;
+            timerElement.innerText = countdownValue;
+            
+            if (countdownValue <= 0) {
+                clearInterval(timerInterval);
+                startBingoGame();
+            }
+        }, 1000);
+
+        function forceStartGame() {
+            if(selectedCards.length === 0) {
+                alert("እባክዎ መጀመሪያ ቢያንስ 1 ካርቴላ ይምረጡ!");
+                return;
+            }
+            clearInterval(timerInterval);
+            startBingoGame();
+        }
+
+        // 3. ሰዓቱ ሲያልቅ ፔጁን ሙሉ ለሙሉ መቀየር
+        function startBingoGame() {
+            document.getElementById('selection-screen').classList.add('hidden');	
