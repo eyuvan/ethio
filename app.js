@@ -1,119 +1,106 @@
-// የቴሌግራም ዌብአፕ መረጃዎችን ማግኘት
-const tg = window.Telegram ? window.Telegram.WebApp : null;
-let telegramUserId = 400234494; // ነባሪ (Fallback) መለያ ቁጥር 
+// የቴሌግራም ዌብ አፕን መክፈቻ
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-    telegramUserId = tg.initDataUnsafe.user.id;
-    // ፕሮፋይል ገጽ ላይ የቴሌግራም ID ቁጥርን ማሳየት
-    if(document.getElementById('prof-tg-id')) {
-        document.getElementById('prof-tg-id').innerText = telegramUserId;
-    }
+let selectedCards = [];
+let countdownValue = 49;
+let gameIdCounter = 1;
+
+// 1. የ 1 - 600 ካርቴላዎችን መፍጠር
+const container = document.getElementById('cards-container');
+for (let i = 1; i <= 600; i++) {
+    let card = document.createElement('div');
+    card.classList.add('card-box');
+    card.innerText = i;
+    card.onclick = () => selectCard(card, i);
+    container.appendChild(card);
 }
 
-// ከባክኤንድ API ላይ የተጫዋቹን ቦነስ እና ቀሪ ሂሳብ የመጫኛ ተግባር
-function loadUserWalletData() {
-    fetch('http://localhost:8000/api/user/' + telegramUserId)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // በዋናው ገጽ ላይ ያሉትን የዋሌት ማሳያዎች ማዘመን
-                document.getElementById('top-main-wallet').innerText = data.main_wallet;
-                document.getElementById('top-play-wallet').innerText = data.play_wallet;
-                
-                // በWallet እና Profile ታቦች ውስጥ ያሉትን ማሳያዎች ማዘመን
-                if(document.getElementById('wallet-main-val')) document.getElementById('wallet-main-val').innerText = data.main_wallet;
-                if(document.getElementById('wallet-play-val')) document.getElementById('wallet-play-val').innerText = data.play_wallet;
-                if(document.getElementById('prof-main-val')) document.getElementById('prof-main-val').innerText = data.main_wallet;
-                if(document.getElementById('prof-play-val')) document.getElementById('prof-play-val').innerText = data.play_wallet;
-            }
-        })
-        .catch(err => console.log('የተጠቃሚ ሂሳብ መጫን አልተቻለም:', err));
-}
-// ገጹ ሲከፈት ወዲያውኑ የዳታቤዝ መረጃውን እንዲጭን ማድረግ
-window.onload = function() {
-    loadUserWalletData();
-}
-
-// --- 1. የካርቴላ መምረጫ አወቃቀር (1-600) ---
-const grid = document.getElementById('grid-container');
-if (grid) {
-    for (let i = 1; i <= 600; i++) {
-        let div = document.createElement('div');
-        div.className = 'cartela';
-        div.innerText = i;
-        div.onclick = function() {
-            document.querySelectorAll('.cartela').forEach(c => c.classList.remove('selected'));
-            div.classList.add('selected');
-        };
-        grid.appendChild(div);
-    }
-}
-
-// --- 2. የቢንጎ ቦርድ ቁጥሮች ዝርዝር ማውጫ (1-75) ---
-function createBingoBoard() {
-    for(let i=1; i<=15; i++) { document.getElementById('list-B').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
-    for(let i=16; i<=30; i++) { document.getElementById('list-I').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
-    for(let i=31; i<=45; i++) { document.getElementById('list-N').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
-    for(let i=46; i<=60; i++) { document.getElementById('list-G').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
-    for(let i=61; i<=75; i++) { document.getElementById('list-O').innerHTML += '<span id="cell-' + i + '">' + i + '</span>'; }
-}
-createBingoBoard();
-
-// --- 3. ለትንሹ ስክሪን የዘፈቀደ ቀለማት ---
-const ballColors = ["#ff4757", "#2ed573", "#1e90ff", "#ffa502", "#9b59b6", "#00d2d3", "#ff6b81"];
-
-// --- 4. የካውንትዳውን ሰዓት ቆጣሪ ሎጂክ ---
-let timer = 49;
-const countdownElement = document.getElementById('countdown');
-
-if (countdownElement) {
-    const clock = setInterval(function() {
-        timer--;
-        countdownElement.innerText = timer;
-        if (timer <= 0) {
-            clearInterval(clock);
-            document.getElementById('selection-page').classList.add('hidden');
-            document.getElementById('live-game-page').classList.remove('hidden');
-            
-            connectToBingoWebSocket(); // ሰዓቱ ሲያልቅ ከባክኤንድ ጋር ይገናኛል
+function selectCard(element, num) {
+    if (selectedCards.includes(num)) {
+        selectedCards = selectedCards.filter(id => id !== num);
+        element.classList.remove('selected');
+    } else {
+        if (selectedCards.length < 3) {
+            selectedCards.push(num);
+            element.classList.add('selected');
+        } else {
+            alert("ቢበዛ መምረጥ የሚችሉት 3 ካርቴላ ብቻ ነው!");
         }
-    }, 1000);
+    }
 }
 
-// --- 5. የዌብሶኬት ግንኙነት ---
-function connectToBingoWebSocket() {
-    const ws = new WebSocket("ws://localhost:8000/ws/game");
+// 2. Countdown Timer እና ወደ ቢንጎ ቦርድ መቀየር
+const timerElement = document.getElementById('timer');
+let timerInterval = setInterval(() => {
+    countdownValue--;
+    timerElement.innerText = countdownValue;
     
-    ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === "LIVE_DRAW") {
-            document.getElementById('lbl-game-id').innerText = data.game_id;
-            document.getElementById('lbl-bet').innerText = data.bet;
-            document.getElementById('lbl-derash').innerText = data.derash;
-            document.getElementById('lbl-called-count').innerText = data.called_count;
-            
-            const ballScreen = document.getElementById('live-ball-screen');
-            if (ballScreen) {
-                ballScreen.innerText = data.current_call;
-                const randomColor = ballColors[Math.floor(Math.random() * ballColors.length)];
-                ballScreen.style.backgroundColor = randomColor;
-            }
-            
-            if (data.history) {
-                data.history.forEach(function(item) {
-                    let cell = document.getElementById('cell-' + item.number);
-                    if (cell) cell.classList.add('called-highlight');
-                });
-            }
-        }
-        
-        if (data.type === "GAME_OVER") {
-            const ballScreen = document.getElementById('live-ball-screen');
-            if (ballScreen) {
-                ballScreen.innerText = "END";
-                ballScreen.style.backgroundColor = "#333";
-            }
-        }
+    if (countdownValue <= 0) {
+        clearInterval(timerInterval);
+        startBingoGame();
+    }
+}, 1000);
+
+function startBingoGame() {
+    document.getElementById('selection-screen').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+    document.getElementById('game-id').innerText = String(gameIdCounter).padStart(4, '0');
+    setupBingoBoard();
+    simulateBingoCalls();
+}
+
+// 3. የቢንጎ ቁጥሮችን በየፈርጁ መዘርዘር (B:1-15, I:16-30, ወዘተ)
+function setupBingoBoard() {
+    const columns = {
+        'B': { min: 1, max: 15, el: document.getElementById('col-B') },
+        'I': { min: 16, max: 30, el: document.getElementById('col-I') },
+        'N': { min: 31, max: 45, el: document.getElementById('col-N') },
+        'G': { min: 46, max: 60, el: document.getElementById('col-G') },
+        'O': { min: 61, max: 75, el: document.getElementById('col-O') }
     };
+
+    for (let key in columns) {
+        columns[key].el.innerHTML = '';
+        for (let i = columns[key].min; i <= columns[key].max; i++) {
+            let numSpan = document.createElement('span');
+            numSpan.id = num-${i};
+            numSpan.innerText = i;
+            columns[key].el.appendChild(numSpan);
+        }
+    }
+}
+
+// 4. የቁጥሮች ጥሪዎችን ማስመስል (Simulation)
+function simulateBingoCalls() {
+    let allNumbers = Array.from({length: 75}, (_, i) => i + 1);
+    // በየ 3 ሰከንዱ አዲስ ቁጥር መጥራት
+    let callInterval = setInterval(() => {
+        if (allNumbers.length === 0) {
+            clearInterval(callInterval);
+            return;
+        }
+        let randomIndex = Math.floor(Math.random() * allNumbers.length);
+        let calledNum = allNumbers.splice(randomIndex, 1)[0];
+        
+        let letter = '';
+        if (calledNum <= 15) letter = 'B';
+        else if (calledNum <= 30) letter = 'I';
+        else if (calledNum <= 45) letter = 'N';
+        else if (calledNum <= 60) letter = 'G';
+        else letter = 'O';
+
+        document.getElementById('current-call').innerText = ${letter} - ${calledNum};
+        
+        let cell = document.getElementById(num-${calledNum});
+        if (cell) cell.classList.add('called-active');
+    }, 3000);
+}
+
+// 5. Navigation Tabs መቀያየሪያ
+function switchTab(tabName) {
+    ['game-screen', 'wallet-screen', 'history-screen', 'profile-screen'].forEach(id => {
+        document.getElementById(id)?.classList.add('hidden');
+    });
+    document.getElementById(${tabName}-screen).classList.remove('hidden');
 }
