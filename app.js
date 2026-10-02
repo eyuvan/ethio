@@ -3,8 +3,7 @@ let countdownValue = 49;
 let gameIdCounter = 1;
 let timerInterval;
 
-function runBingoLogic() {
-    // 1. 1-600 ካርቴላዎችን በሳጥን መልክ መፍጠር
+function startAppInit() {
     const container = document.getElementById('cards-container');
     if (container) {
         container.innerHTML = '';
@@ -12,7 +11,10 @@ function runBingoLogic() {
             let card = document.createElement('div');
             card.classList.add('card-box');
             card.innerText = i;
+            
+            // የነበረው ስህተት እዚህ ጋር 'i' በመተካት ተስተካክሏል
             card.onclick = function() { selectCard(card, i); };
+            
             container.appendChild(card);
         }
     }
@@ -20,8 +22,18 @@ function runBingoLogic() {
     startCountdown();
 }
 
-// ገጹ ሲከፈት ወዲያውኑ ሎጂኩን እንዲያነብ ማድረግ
-window.addEventListener('DOMContentLoaded', runBingoLogic);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startAppInit);
+} else {
+    startAppInit();
+}
+
+try {
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+    }
+} catch(e) { console.log("Telegram bypassed"); }
 
 function selectCard(element, num) {
     if (selectedCards.includes(num)) {
@@ -112,11 +124,10 @@ function generateUserMatrices() {
         let nNums = getRandomUniqueNumbers(31, 45, 5);
         let gNums = getRandomUniqueNumbers(46, 60, 5);
         let oNums = getRandomUniqueNumbers(61, 75, 5);
-
-        for (let row = 0; row < 5; row++) {
+		for (let row = 0; row < 5; row++) {
             let rowNums = [bNums[row], iNums[row], nNums[row], gNums[row], oNums[row]];
             rowNums.forEach((num, colIndex) => {
-				let cell = document.createElement('div');
+                let cell = document.createElement('div');
                 cell.classList.add('matrix-cell');
                 if (row === 2 && colIndex === 2) {
                     cell.classList.add('free-space');
@@ -132,6 +143,7 @@ function generateUserMatrices() {
     });
 }
 
+// ልዩ ቁጥር ማመንጫ
 function getRandomUniqueNumbers(min, max, count) {
     let arr = [];
     while(arr.length < count) {
