@@ -2,10 +2,9 @@
 <html lang="am">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lucky Bingo</title>
-    <!-- የቴሌግራም ስክሪፕት ባይጫን እንኳ ኮዱ እንዳይቋረጥ ተደርጓል -->
-    <script src="https://telegram.org" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Edil Bingo</title>
+    <script src="https://telegram.org"></script>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -13,16 +12,15 @@
             padding: 0;
             background-color: #f1f2f6;
             color: #2c3e50;
-            padding-bottom: 90px;
+            padding-bottom: 100px;
             box-sizing: border-box;
             user-select: none;
         }
 
-        /* Top Dashboard */
         #top-dashboard {
             background: linear-gradient(135deg, #2c3e50, #34495e);
             color: white;
-            padding: 12px 15px;
+            padding: 14px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -36,33 +34,23 @@
 
         #timer-box {
             background-color: #e74c3c;
-            padding: 4px 8px;
+            padding: 5px 10px;
             border-radius: 4px;
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
+        main { padding: 12px; }
+        h3 { text-align: center; margin: 5px 0 12px 0; font-size: 16px; }
 
-        main {
-            padding: 12px;
-        }
-
-        h3 {
-            margin: 5px 0 12px 0;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        /* 1-600 የካርቴላ መደርደሪያ ግሪድ */
+        /* 1-600 የካርቴላ መደርደሪያ ሳጥኖች (ሳጥኖቹ ረዘም እንዲሉ ተደርጓል) */
         #cards-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            height: 280px;
+            gap: 10px;
+            height: 320px;
             overflow-y: auto;
             background: white;
-            padding: 12px;
+            padding: 15px;
             border-radius: 8px;
             border: 1px solid #dcdde1;
             box-sizing: border-box;
@@ -71,12 +59,12 @@
         .card-box {
             background-color: #f8f9fa;
             border: 1px solid #ced6e0;
-            padding: 12px 0;
+            padding: 18px 0; /* ቁመቱ ረዘም/Tall እንዲል ተደርጓል */
             text-align: center;
             font-weight: bold;
             cursor: pointer;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         .card-box.selected {
@@ -91,7 +79,7 @@
             background-color: #007aff;
             color: white;
             border: none;
-            padding: 14px;
+            padding: 15px;
             font-size: 16px;
             font-weight: bold;
             border-radius: 8px;
@@ -99,26 +87,18 @@
             cursor: pointer;
         }
 
-        /* የቢንጎ መጫወቻ ስክሪን */
-        #game-id-header {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
+        /* ቢንጎ ስክሪን */
         #called-number-screen {
             background-color: #16a085;
             color: white;
             text-align: center;
-            padding: 15px;
-            font-size: 28px;
+            padding: 18px;
+            font-size: 30px;
             font-weight: bold;
             border-radius: 8px;
             margin-bottom: 15px;
         }
 
-        /* B I N G O ቦርድ ዓምዶች */
         .bingo-board {
             display: flex;
             justify-content: space-between;
@@ -126,72 +106,27 @@
             padding: 8px;
             border-radius: 8px;
             border: 1px solid #dcdde1;
-            margin-bottom: 15px;
         }
 
-        .column {
-            flex: 1;
-            text-align: center;
-            margin: 0 2px;
-        }
+        .column { flex: 1; text-align: center; margin: 0 2px; }
+        .column h4 { background-color: #2c3e50; color: white; margin: 0 0 6px 0; padding: 6px 0; border-radius: 4px; }
+        .num-list { display: flex; flex-direction: column; gap: 4px; height: 180px; overflow-y: auto; }
+        .num-list span { background-color: #f1f2f6; border: 1px solid #e4e7eb; padding: 4px 0; font-size: 12px; font-weight: bold; border-radius: 3px; }
+        .num-list span.called-active { background-color: #e67e22 !important; color: white !important; }
 
-        .column h4 {
-            background-color: #2c3e50;
-            color: white;
-            margin: 0 0 6px 0;
-            padding: 6px 0;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .num-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            height: 180px;
-            overflow-y: auto;
-        }
-		.num-list span {
-            background-color: #f1f2f6;
-            border: 1px solid #e4e7eb;
-            padding: 4px 0;
-            font-size: 12px;
-            font-weight: bold;
-            border-radius: 3px;
-        }
-
-        .num-list span.called-active {
-            background-color: #e67e22 !important;
-            color: white !important;
-        }
-
-        /* የ 5x5 ማትሪክስ ካርድ ዲዛይን */
         .bingo-matrix {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
+            gap: 5px;
             background: #2c3e50;
-            padding: 6px;
+            padding: 8px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-top: 5px;
         }
+.matrix-cell { background-color: white; text-align: center; padding: 12px 0; font-weight: bold; font-size: 14px; border-radius: 4px; }
+        .matrix-cell.free-space { background-color: #e74c3c; color: white; font-size: 11px; }
 
-        .matrix-cell {
-            background-color: white;
-            text-align: center;
-            padding: 10px 0;
-            font-weight: bold;
-            font-size: 13px;
-            border-radius: 4px;
-        }
-
-        .matrix-cell.free-space {
-            background-color: #e74c3c;
-            color: white;
-            font-size: 10px;
-        }
-
-        /* የታችኛው ናቪጌሽን ባር */
+        /* የታችኛው ማውጫ (Navigation Bar - ቁመቱ ረዘም እንዲል ተደርጓል) */
         .nav-bar {
             position: fixed;
             bottom: 0;
@@ -202,45 +137,42 @@
             justify-content: space-around;
             border-top: 1px solid #ddd;
             z-index: 2000;
+            height: 70px; /* ረዘም ያለ ናቪጌሽን */
         }
 
         .nav-bar button {
             flex: 1;
             background: none;
             border: none;
-            padding: 20px 0;
             font-size: 14px;
             font-weight: bold;
             color: #7f8c8d;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .nav-bar button.active-tab {
             color: #007aff !important;
             background-color: #f8f9fa;
         }
-        
-        .tab-content {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #dcdde1;
-        }
+
+        .tab-content { background: white; padding: 15px; border-radius: 8px; border: 1px solid #dcdde1; }
     </style>
 </head>
 <body>
 
-    <!-- Top Dashboard (Main Wallet: 0, Play Wallet: 10) -->
     <div id="top-dashboard">
-        <div>Stake: <span id="play-stake">10 ETB</span></div>
-        <div>Main: <span id="main-wallet">0 ETB</span></div>
-        <div>Play: <span id="play-wallet">10 ETB</span></div>
+        <div>Stake: <span>10 ETB</span></div>
+        <div>Main: <span id="main-wallet-top">0 ETB</span></div>
+        <div>Play: <span id="play-wallet-top">10 ETB</span></div>
         <div id="timer-box">Timer: <span id="timer">49</span>s</div>
     </div>
 
-    <!-- Main Content -->
     <main>
-        <!-- 🎯 GAME TAB -->
+        <!-- 🎮 GAME TAB -->
         <div id="game-tab">
             <section id="selection-screen">
                 <h3>ካርቴላ ይምረጡ (ከ 1 - 3 ማርክ ማድረግ ይችላሉ)</h3>
@@ -249,7 +181,7 @@
             </section>
 
             <section id="game-screen" class="hidden">
-                <div id="game-id-header">Game ID: <span id="game-id">0001</span></div>
+                <div style="font-size:16px; font-weight:bold; text-align:center; margin-bottom:8px;">Game ID: <span id="game-id">0001</span></div>
                 <div id="called-number-screen"><span id="current-call">ቁጥር በመጠባበቅ ላይ...</span></div>
                 
                 <div class="bingo-board">
@@ -259,8 +191,7 @@
                     <div class="column"><h4>G</h4><div id="col-G" class="num-list"></div></div>
                     <div class="column"><h4>O</h4><div id="col-O" class="num-list"></div></div>
                 </div>
-                
-                <div style="font-weight:bold; margin-top:15px; margin-bottom: 5px;">የእርስዎ የ 5x5 ካርዶች፦</div>
+                <div style="font-weight:bold; margin-top:15px; margin-bottom:5px;">የእርስዎ የ 5x5 ካርዶች፦</div>
                 <div id="user-matrices-container"></div>
             </section>
         </div>
@@ -271,7 +202,8 @@
             <p><b>Main Wallet:</b> 0 ETB</p>
             <p><b>Play Wallet:</b> 10 ETB</p>
         </div>
-		<!-- 📜 HISTORY TAB -->
+
+        <!-- 📜 HISTORY TAB -->
         <div id="history-tab" class="tab-content hidden">
             <h2>የተጫወቱት ታሪክ (History)</h2>
             <p>ምንም የታሪክ መዝገብ የለም።</p>
@@ -280,50 +212,21 @@
         <!-- 👤 PROFILE TAB -->
         <div id="profile-tab" class="tab-content hidden">
             <h2>የእኔ መገለጫ (Profile)</h2>
-            <p><b>Telegram ID:</b> 74839201</p>
+            <p><b>Telegram ID:</b> <span id="prof-tg-id">74839201</span></p>
             <p><b>Telephone:</b> 0928361886</p>
             <p><b>Main Wallet:</b> 0 ETB</p>
             <p><b>Play Wallet:</b> 10 ETB</p>
         </div>
     </main>
 
-    <!-- Bottom Navigation Bar -->
     <nav class="nav-bar">
-        <button id="btn-game" class="active-tab" onclick="switchTab('game')">🎮 Game</button>
-        <button id="btn-wallet" onclick="switchTab('wallet')">💰 Wallet</button>
-        <button id="btn-history" onclick="switchTab('history')">📜 History</button>
-        <button id="btn-profile" onclick="switchTab('profile')">👤 Profile</button>
+        <button id="btn-game" class="active-tab" onclick="switchTab('game')">🎮<span>Game</span></button>
+		<button id="btn-wallet" onclick="switchTab('wallet')">💰<span>Wallet</span></button>
+        <button id="btn-history" onclick="switchTab('history')">📜<span>History</span></button>
+        <button id="btn-profile" onclick="switchTab('profile')">👤<span>Profile</span></button>
     </nav>
 
-    <script>
-        let selectedCards = [];
-        let countdownValue = 49;
-        let gameIdCounter = 1;
-        let timerInterval;
-
-        // የቴሌግራም ስክሪፕት መዘግየት ቢኖር እንኳ ገጹ ራሱን ችሎ ያለምንም ስህተት ወዲያውኑ የሚጀምርበት ተግባር
-        function initializeApp() {
-            // 1. 1-600 ካርቴላዎችን በግሪድ መፍጠር
-            const container = document.getElementById('cards-container');
-            if (container) {
-                container.innerHTML = '';
-                for (let i = 1; i <= 600; i++) {
-                    let card = document.createElement('div');
-                    card.classList.add('card-box');
-                    card.innerText = i;
-                    card.onclick = function() { selectCard(card, i); };
-                    container.appendChild(card);
-                }
-            }
-            setupBingoBoard();
-            startCountdown();
-        }
-
-        // ገጹ እንደተጫነ ወዲያውኑ ማስጀመር
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
-        }
-
-        // ቴሌግራም Mini Appን ማስተካከያ (ስህተት እንዳይፈጥር በ try-catch ተከልሏል)
+    <!-- የጃቫስክሪፕት ፋይል ግንኙነት -->
+    <script src="app.js"></script>
+</body>
+</html>
